@@ -9,8 +9,7 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    output: 'export',
-    trailingSlash: true,
+    trailingSlash: true, // 保留也可以
 }
 
-export default nextConfig
+export default nextConfig;
