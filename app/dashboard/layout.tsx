@@ -9,7 +9,7 @@ import { MessageSquare, Clock, User, ChevronRight, ChevronDown } from "lucide-re
 // 多語系
 import { useI18n } from "@/components/i18n-provider";
 // 匯入 useState Hook，用來建立狀態（historyExpanded）
-import {JSX, useState} from "react";
+import {JSX, useEffect, useState} from "react";
 // 匯入歷史紀錄的 context Provider 以及 Hook
 import { HistoryProvider, useHistory } from "./context/historyContext";
 
@@ -29,13 +29,24 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     // 判斷 navItem 是否為當前路由
     const isNavItemActive = (href: string) => normalizePath(pathname) === normalizePath(href);
 
-
     // 定義 Sidebar 導航項目陣列
     const navItems: { name: string; href: string; icon: JSX.Element }[] = [
         { name: t("chat.title"), href: "/dashboard", icon: <MessageSquare size={18} /> },
         { name: t("history.title"), href: "/dashboard/history", icon: <Clock size={18} /> },
         { name: t("profile.title"), href: "/dashboard/profile", icon: <User size={18} /> },
     ];
+
+    // 狀態：判斷組件是否已經在 client 端掛載完成，初始值為 false，代表尚未掛載
+    const [mounted, setMounted] = useState(false);
+
+    /**
+     * useEffect 只會在 client 端執行一次（組件掛載後）
+     * 這裡將 mounted 設為 true，表示 client 已經準備好
+     * 之後可以安全地 render 依賴 window / client-only 的內容
+     */
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     return (
         <div className="flex h-screen bg-gray-100">
@@ -79,7 +90,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                     </div>
 
                     {/* 歷史對話列表：展開時顯示，無歷史顯示提示，有歷史則列出每筆對話 */}
-                    {historyExpanded && (
+                    {mounted && historyExpanded && (
                         <ul className="ml-7 mt-2 space-y-1">
                             {historyList.length === 0 && <li className="text-gray-400 text-sm">尚無歷史對話</li>}
                             {historyList.map(h => (
