@@ -66,9 +66,9 @@ export default function ChatPage() {
 
         setMessages(chat.messages);
 
-        // 如果最後一筆是空白 assistant → 立即回覆
+        // 如果最後一筆是空白 robot → 立即回覆
         const lastMsg = chat.messages[chat.messages.length - 1];
-        if (lastMsg?.role === "assistant" && lastMsg.content === "") {
+        if (lastMsg?.role === "robot" && lastMsg.content === "") {
             const userMsg = chat.messages[chat.messages.length - 2];
             if (userMsg) {
                 setIsTyping(true);
@@ -85,9 +85,9 @@ export default function ChatPage() {
         const userInput = input.trim();
         setInput("");
 
-        // 新增 user + 空白 assistant
+        // 新增 user + 空白 robot
         setMessages(prev => {
-            const newList = [...prev, { role: "user", content: userInput }, { role: "assistant", content: "" }];
+            const newList = [...prev, { role: "user", content: userInput }, { role: "robot", content: "" }];
             saveHistory(newList, chatId);
             refreshHistory();
 

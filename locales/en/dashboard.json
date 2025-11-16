@@ -1,5 +1,6 @@
 {
   "chat.title": "new chat",
   "history.title": "history",
-  "profile.title": "Profile"
+  "profile.title": "Profile",
+  "chat.placeholder": "Please enter your question..."
 }
