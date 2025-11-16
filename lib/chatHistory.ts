@@ -77,7 +77,7 @@ export const getHistoryList = (): ChatHistory[] => {
 };
 
 // 根據 chatId 讀取單個歷史
-export const getChatById = (chatId: string): ChatHistory | null => {
+export const getChatById = (chatId: string | Array<string>): ChatHistory | null => {
     // 從整份歷史中找出 id 符合的項目，找不到回傳 null
     const list = getHistoryList();
     return list.find(h => h.id === chatId) || null;
