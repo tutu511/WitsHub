@@ -63,6 +63,12 @@ export default function ChatPage() {
     const typeWriter = (text: string, indexToUpdate: number, chatIdToSave: string) => {
         // return Promise 在打字完成後可 await
         return new Promise<void>((resolve) => {
+            // 先清除舊的 interval
+            if (typingInterval.current != null) {
+                clearInterval(typingInterval.current!);
+                // 設為 null
+                typingInterval.current = null;
+            }
             // 目前（機器人回覆）輸出的文字位置 index
             let i = 0;
             // 啟動 interval，每 40ms 輸出一個字
@@ -91,6 +97,12 @@ export default function ChatPage() {
 
                 // 若已輸出全部文字
                 if (i >= text.length) {
+                    // 清除 interval
+                    if (typingInterval.current != null) {
+                        clearInterval(typingInterval.current!);
+                        // 設為 null
+                        typingInterval.current = null;
+                    }
                     // 結束 Promise
                     resolve();
                 }
@@ -103,8 +115,8 @@ export default function ChatPage() {
         // 停止計時器
         if (typingInterval.current != null) {
             clearInterval(typingInterval.current!);
+            typingInterval.current = null;
         }
-        typingInterval.current = null;
         // 設定 robot 不再打字
         setIsTyping(false);
     };
@@ -137,14 +149,6 @@ export default function ChatPage() {
                     typeWriter(botReply, chat.messages.length - 1, chatId).then(() => {
                         // 設定為「停止打字」
                         setIsTyping(false);
-                        console.log("tutu: stop")
-                        // 清除 interval
-                        if (typingInterval.current != null) {
-                            console.log("tutu: clear")
-                            clearInterval(typingInterval.current!);
-                        }
-                        // 設為 null
-                        typingInterval.current = null;
                     });
                 }
             }
@@ -175,7 +179,6 @@ export default function ChatPage() {
             }
 
             // 啟動打字效果，正在打字
-            console.log("tutu: typeing")
             setIsTyping(true);
             // 要輸出的機器人文字
             const botReply = `你剛剛說的是 "${userInput}"`;
@@ -184,15 +187,6 @@ export default function ChatPage() {
                 typeWriter(botReply, newList.length - 1, chatId).then(() => {
                     // 設定為「停止打字」
                     setIsTyping(false);
-                    console.log("tutu: stop")
-                    console.log("tutu:  = "+ typingInterval.current)
-                    // 清除 interval
-                    if (typingInterval.current != null) {
-                        console.log("tutu: clear")
-                        clearInterval(typingInterval.current!);
-                    }
-                    // 設為 null
-                    typingInterval.current = null;
                 })
 
             }
