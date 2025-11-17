@@ -43,7 +43,7 @@ export default function ChatPage() {
 
     // 滾動到訊息最底部
     const scrollToBottom = () => {
-        if ("scrollIntoView" in messagesEndRef.current) {
+        if (messagesEndRef.current != null && "scrollIntoView" in messagesEndRef.current) {
             // 執行原生 DOM API 滾動，使用平滑滾動動畫
             messagesEndRef.current.scrollIntoView({
                 behavior: "smooth"
@@ -201,7 +201,7 @@ export default function ChatPage() {
         // 外層容器：垂直排列，填滿高度
         <div className="flex flex-col h-full">
             {/* 訊息列表區塊 */}
-            <div className="flex-1 overflow-y-auto space-y-6 p-4 bg-gray-100 rounded-xl">
+            <div className="flex-1 overflow-y-auto space-y-6 p-4 bg-white rounded-xl">
                 {/* 將 messages 每一筆渲染成聊天泡泡 */}
                 {messages.map((m, i) => {
                     const isUser = m.role === "user";
@@ -211,12 +211,12 @@ export default function ChatPage() {
                             : ""}`}>
                             {/* 頭像區 */}
                             <div className="p-2 bg-gray-300 rounded-full">
-                                {isUser ? <User size={20} /> : <Bot size={20} />}
+                                {isUser ? <User size={25} /> : <Bot size={25} />}
                             </div>
                             {/* 訊息內容泡泡 */}
                             <div className={`p-3 rounded-xl shadow-sm text-sm whitespace-pre-line break-words ${isUser 
                                 ? "bg-blue-500 text-white" 
-                                : "bg-white text-gray-800"}`
+                                : "bg-gray-200 text-gray-800"}`
                             } style={{ maxWidth: "66%" }}>
                                 {m.content}
                             </div>

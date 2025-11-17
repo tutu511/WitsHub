@@ -12,6 +12,8 @@ import { useI18n } from "@/components/i18n-provider";
 import {JSX, useEffect, useState} from "react";
 // 匯入歷史紀錄的 context Provider 以及 Hook
 import { HistoryProvider, useHistory } from "./context/historyContext";
+import {LanguageSwitcher} from "@/components/languageSwitcher";
+import {LogoutButton} from "@/components/logoutButton";
 
 // 定義 DashboardContent 元件，接收 children 作為頁面內容
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -132,7 +134,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             </aside>
 
             {/* 主要內容區：flex-1 自動撐滿，padding，允許滾動 */}
-            <main className="flex-1 p-10 overflow-y-auto">
+            <main className="flex-1 pt-11 px-10 pb-10 overflow-y-auto">
+                {/*全局右上角的區塊*/}
+                <div className="absolute top-2 right-10 z-10">
+                    {/*地球：可切換語系*/}
+                    <LanguageSwitcher />
+                    {/*登出*/}
+                    <LogoutButton />
+                </div>
                 {/* 內容卡片容器：白底、圓角、陰影、padding */}
                 <div className="bg-white shadow-sm rounded-2xl p-8 h-full border border-gray-200">
                     {children}
