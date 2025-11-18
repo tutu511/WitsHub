@@ -1,3 +1,6 @@
 {
-  "profile.title": "個人資料"
+  "chat.title": "新對話",
+  "history.title": "歷史紀錄",
+  "profile.title": "個人資料",
+  "chat.placeholder": "請輸入您的問題..."
 }
