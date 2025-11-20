@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
 import { JSX, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -21,6 +21,7 @@ const GlassPanel = ({ children, className = "" }: { children: React.ReactNode; c
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { t } = useI18n();
     const pathname = usePathname();
+    const router = useRouter();
     const [historyExpanded, setHistoryExpanded] = useState(true);
     const { historyList, removeHistory } = useHistory();
     const normalizePath = (p: string) => p.replace(/\/$/, "");
@@ -222,6 +223,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                                         event.preventDefault();
                                                                         event.stopPropagation();
                                                                         removeHistory(history.id);
+                                                                        const currentPath = normalizePath(pathname);
+                                                                        const deletedPath = normalizePath(`/dashboard/history/${history.id}`);
+                                                                        if (currentPath === deletedPath) {
+                                                                            router.push("/dashboard");
+                                                                        }
                                                                         closeMenu();
                                                                     }}
                                                                 >
