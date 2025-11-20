@@ -82,3 +82,10 @@ export const getChatById = (chatId: string | Array<string>): ChatHistory | null 
     const list = getHistoryList();
     return list.find(h => h.id === chatId) || null;
 };
+
+export const deleteHistory = (chatId: string) => {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return;
+    const list: ChatHistory[] = JSON.parse(localStorage.getItem("chat-history") || "[]");
+    const filtered = list.filter(item => item.id !== chatId);
+    localStorage.setItem("chat-history", JSON.stringify(filtered));
+};

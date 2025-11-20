@@ -38,18 +38,23 @@ export function LanguageSwitcher() {
                     <img src="/language.png" className="w-6 h-6" />
                 )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                {languages.map((lang) => (
-                    <DropdownMenuItem
-                        key={lang.code}
-                        onClick={() => handleChangeLocale(lang.code)}
-                        className={
-                            locale === lang.code ? "bg-muted font-semibold" : ""
-                        }
-                    >
-                        {lang.label}
-                    </DropdownMenuItem>
-                ))}
+            <DropdownMenuContent side="right" align="start" className="border-white/60 bg-white/95 text-slate-900 rounded-2xl shadow-2xl p-2">
+                {languages.map((lang) => {
+                    const isActive = locale === lang.code;
+                    return (
+                        <DropdownMenuItem
+                            key={lang.code}
+                            onClick={() => handleChangeLocale(lang.code)}
+                            className={`rounded-xl text-xs px-3 py-2 transition-colors ${
+                                isActive
+                                    ? "bg-slate-100 text-slate-900 font-semibold"
+                                    : "text-slate-700 hover:bg-white/15 hover:text-slate-900 focus:bg-white/15 focus:text-slate-900"
+                            }`}
+                        >
+                            {lang.label}
+                        </DropdownMenuItem>
+                    );
+                })}
             </DropdownMenuContent>
         </DropdownMenu>
     );

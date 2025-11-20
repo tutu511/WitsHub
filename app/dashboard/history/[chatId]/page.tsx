@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 // useParams 用來取得動態路由參數
 import { useParams } from "next/navigation";
 // 匯入圖示
-import { Bot, SendHorizontal, Pause } from "lucide-react";
+import { SendHorizontal, Pause } from "lucide-react";
 // 匯入 chatHistory 方法與型別
 import { getChatById, saveHistory, Message } from "@/lib/chatHistory";
 // 匯入自訂的歷史紀錄 context
@@ -215,14 +215,14 @@ export default function ChatPage() {
                             : ""}`}>
                             {/* 頭像區 */}
                             <div
-                                className={`flex items-center justify-center rounded-full w-10 h-10 ${
-                                    isUser ? "border border-white/30 bg-white/10 overflow-hidden" : "bg-gray-300"
+                                className={`flex items-center justify-center rounded-full w-10 h-10 overflow-hidden ${
+                                    isUser ? "border border-white/30 bg-white/10" : "border border-white/20 bg-white/10"
                                 }`}
                             >
                                 {isUser ? (
                                     <img src="/pic-1.png" alt="使用者頭像" className="w-full h-full object-cover" />
                                 ) : (
-                                    <Bot size={25} />
+                                    <img src="/pic-wits.png" alt="WitsHub" className="w-full h-full object-cover" />
                                 )}
                             </div>
                             {/* 訊息內容泡泡 */}

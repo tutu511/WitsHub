@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare, Clock, ChevronRight, ChevronDown } from "lucide-react";
-import { JSX, useEffect, useMemo, useState } from "react";
+import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import { JSX, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useI18n } from "@/components/i18n-provider";
 import { HistoryProvider, useHistory } from "./context/historyContext";
 import { LanguageSwitcher } from "@/components/languageSwitcher";
@@ -21,7 +22,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const { t } = useI18n();
     const pathname = usePathname();
     const [historyExpanded, setHistoryExpanded] = useState(true);
-    const { historyList } = useHistory();
+    const { historyList, removeHistory } = useHistory();
     const normalizePath = (p: string) => p.replace(/\/$/, "");
 
     const navItems: { name: string; href: string; icon: JSX.Element }[] = useMemo(
@@ -31,6 +32,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
     const [mounted, setMounted] = useState(false);
     const [storedUsername, setStoredUsername] = useState<string | null>(null);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const historyListRef = useRef<HTMLDivElement | null>(null);
+    const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
     useEffect(() => setMounted(true), []);
     useEffect(() => {
         const savedUsername = localStorage.getItem(USERNAME_STORAGE_KEY);
@@ -43,6 +48,65 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         window.addEventListener("storage", handleStorage);
         return () => window.removeEventListener("storage", handleStorage);
     }, []);
+
+    const closeMenu = useCallback(() => {
+        setOpenMenuId(null);
+        menuButtonRef.current = null;
+        setMenuPosition(null);
+    }, []);
+
+    useEffect(() => {
+        const handleClickAway = () => closeMenu();
+        window.addEventListener("click", handleClickAway);
+        return () => window.removeEventListener("click", handleClickAway);
+    }, [closeMenu]);
+
+    useEffect(() => {
+        if (!openMenuId || !menuButtonRef.current) {
+            return;
+        }
+
+        const updatePosition = () => {
+            const target = menuButtonRef.current;
+            if (!target) return;
+
+            const rect = target.getBoundingClientRect();
+            setMenuPosition({
+                top: rect.bottom + 15,
+                left: rect.right,
+            });
+        };
+
+        updatePosition();
+        window.addEventListener("resize", updatePosition);
+        window.addEventListener("scroll", updatePosition);
+        const historyListEl = historyListRef.current;
+        historyListEl?.addEventListener("scroll", updatePosition);
+
+        return () => {
+            window.removeEventListener("resize", updatePosition);
+            window.removeEventListener("scroll", updatePosition);
+            historyListEl?.removeEventListener("scroll", updatePosition);
+        };
+    }, [openMenuId]);
+
+    const handleMenuToggle = (event: MouseEvent<HTMLButtonElement>, historyId: string) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (openMenuId === historyId) {
+            closeMenu();
+            return;
+        }
+
+        menuButtonRef.current = event.currentTarget;
+        const rect = event.currentTarget.getBoundingClientRect();
+        setMenuPosition({
+            top: rect.bottom + 15,
+            left: rect.right,
+        });
+        setOpenMenuId(historyId);
+    };
 
     const renderNavLink = (item: (typeof navItems)[number]) => {
         const active = normalizePath(pathname) === normalizePath(item.href);
@@ -97,7 +161,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                 </button>
 
                                 {mounted && historyExpanded && (
-                                    <div className="mt-3 max-h-[40vh] overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                                <div
+                                    ref={historyListRef}
+                                    className="mt-3 max-h-[45vh] overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                                >
                                         {historyList.length === 0 && (
                                             <p className="text-xs text-slate-400 px-3 py-2 rounded-2xl bg-white/5 border border-white/5">
                                                 尚無歷史對話
@@ -106,18 +173,64 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                         {historyList.map(history => {
                                             const href = `/dashboard/history/${history.id}`;
                                             const active = normalizePath(pathname) === normalizePath(href);
+                                            const isMenuOpen = openMenuId === history.id;
                                             return (
-                                                <Link
-                                                    key={history.id}
-                                                    href={href}
-                                                    className={`block px-4 py-3 rounded-2xl text-xs border ${
-                                                        active
-                                                            ? "bg-white/15 border-white/40 text-white"
-                                                            : "bg-white/5 border-white/10 text-slate-300 hover:text-white hover:border-white/30"
-                                                    }`}
-                                                >
-                                                    {history.title.length > 28 ? `${history.title.slice(0, 28)}…` : history.title}
-                                                </Link>
+                                                <div key={history.id} className="relative group">
+                                                    <Link
+                                                        href={href}
+                                                        className={`block px-4 py-3 pr-12 rounded-2xl text-xs border transition ${
+                                                            active
+                                                                ? "bg-white/15 border-white/40 text-white"
+                                                                : "bg-transparent border-transparent text-slate-300 hover:text-white hover:border-white/30 hover:bg-white/10"
+                                                        }`}
+                                                    >
+                                                        {history.title.length > 12 ? `${history.title.slice(0, 12)}…` : history.title}
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        aria-label="更多選項"
+                                                        onClick={event => handleMenuToggle(event, history.id)}
+                                                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/70 transition ${
+                                                            active || isMenuOpen
+                                                                ? "opacity-100 pointer-events-auto bg-white/15"
+                                                                : "opacity-0 pointer-events-none bg-black/30 group-hover:opacity-100 group-hover:pointer-events-auto"
+                                                        }`}
+                                                    >
+                                                        <MoreHorizontal size={16} />
+                                                    </button>
+                                                    {isMenuOpen && mounted && menuPosition &&
+                                                        createPortal(
+                                                            <div
+                                                                className="fixed z-50 w-20 rounded-lg border border-white/60 bg-white/95 text-slate-900 backdrop-blur-lg p-2 shadow-2xl transform -translate-x-full"
+                                                                style={{ top: menuPosition.top, left: menuPosition.left }}
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                className="w-full text-center px-3 py-1.5 rounded-lg text-xs text-slate-700 hover:bg-slate-200"
+                                                                    onClick={event => {
+                                                                        event.preventDefault();
+                                                                        event.stopPropagation();
+                                                                        closeMenu();
+                                                                    }}
+                                                                >
+                                                                    分享
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                className="w-full text-center px-3 py-1.5 rounded-lg text-xs text-red-600 hover:bg-red-100"
+                                                                    onClick={event => {
+                                                                        event.preventDefault();
+                                                                        event.stopPropagation();
+                                                                        removeHistory(history.id);
+                                                                        closeMenu();
+                                                                    }}
+                                                                >
+                                                                    刪除
+                                                                </button>
+                                                            </div>,
+                                                            document.body
+                                                        )}
+                                                </div>
                                             );
                                         })}
                                     </div>
@@ -125,7 +238,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                             </div>
                         </div>
 
-                        <div className="mt-auto pt-6 border-t border-white/5">
+                        <div className="mt-auto pt-4 border-t border-white/5">
                             <div className="flex items-center justify-between px-2 pb-4">
                                 <LanguageSwitcher />
                                 <LogoutButton />
