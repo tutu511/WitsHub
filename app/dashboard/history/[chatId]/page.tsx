@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 // useParams 用來取得動態路由參數
 import { useParams } from "next/navigation";
 // 匯入圖示
-import { User, Bot, SendHorizontal, Pause } from "lucide-react";
+import { SendHorizontal, Pause } from "lucide-react";
 // 匯入 chatHistory 方法與型別
 import { getChatById, saveHistory, Message } from "@/lib/chatHistory";
 // 匯入自訂的歷史紀錄 context
@@ -26,6 +26,7 @@ export default function ChatPage() {
     const [messages, setMessages] = useState<Message[]>([]);
     // 狀態：輸入框文字
     const [input, setInput] = useState("");
+    const [isComposing, setIsComposing] = useState(false);
     // 狀態：機器人是否正在「打字」
     const [isTyping, setIsTyping] = useState(false);
 
@@ -38,17 +39,17 @@ export default function ChatPage() {
      *   null：還沒設定 interval 時的初始值
      */
     const typingInterval = useRef<NodeJS.Timeout | null>(null);
-    // ref：指向訊息列表最底部的 <div>，用來實現自動滾動到底部
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    // ref：指向訊息列表容器，讓滾動侷限在該區域
+    const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
     // 滾動到訊息最底部
     const scrollToBottom = () => {
-        if (messagesEndRef.current != null && "scrollIntoView" in messagesEndRef.current) {
-            // 執行原生 DOM API 滾動，使用平滑滾動動畫
-            messagesEndRef.current.scrollIntoView({
-                behavior: "smooth"
-            } as ScrollIntoViewOptions)
-        }
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: "smooth"
+        });
     };
 
     // 當 messages 每次更新時，執行 scrollToBottom 自動滾動到底部
@@ -201,7 +202,10 @@ export default function ChatPage() {
         // 外層容器：垂直排列，填滿高度
         <div className="flex flex-col h-full">
             {/* 訊息列表區塊 */}
-            <div className="flex-1 overflow-y-auto space-y-6 p-4 bg-white rounded-xl">
+            <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto space-y-6 p-4 rounded-xl"
+            >
                 {/* 將 messages 每一筆渲染成聊天泡泡 */}
                 {messages.map((m, i) => {
                     const isUser = m.role === "user";
@@ -210,43 +214,56 @@ export default function ChatPage() {
                             ? "flex-row-reverse" 
                             : ""}`}>
                             {/* 頭像區 */}
-                            <div className="p-2 bg-gray-300 rounded-full">
-                                {isUser ? <User size={25} /> : <Bot size={25} />}
+                            <div
+                                className={`flex items-center justify-center rounded-full w-10 h-10 overflow-hidden ${
+                                    isUser ? "border border-white/30 bg-white/10" : "border border-white/20 bg-white/10"
+                                }`}
+                            >
+                                {isUser ? (
+                                    <img src="/pic-1.png" alt="使用者頭像" className="w-full h-full object-cover" />
+                                ) : (
+                                    <img src="/pic-wits.png" alt="WitsHub" className="w-full h-full object-cover" />
+                                )}
                             </div>
                             {/* 訊息內容泡泡 */}
-                            <div className={`p-3 rounded-xl shadow-sm text-sm whitespace-pre-line break-words ${isUser 
-                                ? "bg-blue-500 text-white" 
-                                : "bg-gray-200 text-gray-800"}`
-                            } style={{ maxWidth: "66%" }}>
+                            <div
+                                className={`p-3 rounded-xl shadow-sm text-sm whitespace-pre-line break-words ${
+                                    isUser ? "bg-white/20 text-white" : "bg-transparent text-white"
+                                }`}
+                                style={{ maxWidth: "66%" }}
+                            >
                                 {m.content}
                             </div>
                         </div>
                     );
                 })}
-                {/* 最底部的 ref，用於自動滾動 */}
-                <div ref={messagesEndRef} />
             </div>
 
             {/* 下方輸入框 + 送出按鈕 */}
             <div className="mt-4 flex gap-2">
                 <input
-                    // 輸入框的值
                     value={input}
-                    // 更新 input state
                     onChange={e => setInput(e.target.value)}
-                    // 按 Enter 送出
-                    onKeyDown={e => e.key === "Enter" && !isTyping && sendMessage()}
-                    // 提示文字
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    onKeyDown={e => {
+                        const composing =
+                            isComposing ||
+                            e.nativeEvent.isComposing ||
+                            e.keyCode === 229;
+                        if (e.key === "Enter" && !composing && !isTyping) {
+                            sendMessage();
+                        }
+                    }}
                     placeholder={t("chat.placeholder")}
-                    className="flex-1 border border-blue-300 focus:ring-2 focus:ring-blue-300 focus:outline-none rounded-xl px-4 py-2 text-sm transition"
+                    className="flex-1 rounded-xl border border-white/30 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
                 />
                 {/* 送出 / 停止按鈕 */}
                 <button
                     onClick={isTyping ? stopTyping : sendMessage}
-                    className={`px-4 py-2 rounded-xl text-sm flex items-center justify-center transition
-                        ${isTyping 
-                        ? "bg-red-500 text-white" 
-                        : "bg-blue-500 text-white hover:bg-blue-600"}`}
+                    className={`px-6 py-2 rounded-xl text-sm flex items-center justify-center border border-white/30 text-white transition ${
+                        isTyping ? "bg-white/10 hover:bg-white/20" : "bg-white/20 hover:bg-white/30"
+                    }`}
                 >
                     {isTyping
                         ? <Pause size={20} />

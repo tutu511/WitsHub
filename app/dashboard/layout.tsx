@@ -1,157 +1,332 @@
 "use client";
 
-// 匯入 Next.js 提供的 Link 元件，用來做前端導航（client-side routing）
 import Link from "next/link";
-// 匯入 usePathname Hook，可以取得當前路由路徑（pathname）
-import { usePathname } from "next/navigation";
-// 匯入 Lucide React 的圖示元件，用來顯示 icon
-import { MessageSquare, Clock, User, ChevronRight, ChevronDown } from "lucide-react";
-// 多語系
+import { usePathname, useRouter } from "next/navigation";
+import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import { JSX, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useI18n } from "@/components/i18n-provider";
-// 匯入 useState Hook，用來建立狀態（historyExpanded）
-import {JSX, useEffect, useState} from "react";
-// 匯入歷史紀錄的 context Provider 以及 Hook
 import { HistoryProvider, useHistory } from "./context/historyContext";
-import {LanguageSwitcher} from "@/components/languageSwitcher";
-import {LogoutButton} from "@/components/logoutButton";
+import { LanguageSwitcher } from "@/components/languageSwitcher";
+import { LogoutButton } from "@/components/logoutButton";
 
-// 定義 DashboardContent 元件，接收 children 作為頁面內容
+const USERNAME_STORAGE_KEY = "witsHubUsername";
+
+const GlassPanel = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(15,23,42,0.45)] ${className}`}>
+        {children}
+    </div>
+);
+
 function DashboardContent({ children }: { children: React.ReactNode }) {
-    // 使用 i18n hook 取得 t 函式，用來翻譯文字
     const { t } = useI18n();
-    // 取得當前路由路徑
     const pathname = usePathname();
-    // 狀態：歷史對話列表是否展開，默認先展開
+    const router = useRouter();
     const [historyExpanded, setHistoryExpanded] = useState(true);
-    // 從 HistoryContext 取得 historyList（所有歷史對話）
-    const { historyList } = useHistory();
-
-    // 讓路徑比較更可靠：移除結尾斜線
+    const { historyList, removeHistory } = useHistory();
     const normalizePath = (p: string) => p.replace(/\/$/, "");
-    // 判斷 navItem 是否為當前路由
-    const isNavItemActive = (href: string) => normalizePath(pathname) === normalizePath(href);
 
-    // 定義 Sidebar 導航項目陣列
-    const navItems: { name: string; href: string; icon: JSX.Element }[] = [
-        { name: t("chat.title"), href: "/dashboard", icon: <MessageSquare size={18} /> },
-        { name: t("history.title"), href: "/dashboard/history", icon: <Clock size={18} /> },
-        { name: t("profile.title"), href: "/dashboard/profile", icon: <User size={18} /> },
-    ];
+    const navItems: { name: string; href: string; icon: JSX.Element }[] = useMemo(
+        () => [{ name: t("chat.title"), href: "/dashboard", icon: <MessageSquare size={18} /> }],
+        [t]
+    );
 
-    // 狀態：判斷組件是否已經在 client 端掛載完成，初始值為 false，代表尚未掛載
     const [mounted, setMounted] = useState(false);
-
-    /**
-     * useEffect 只會在 client 端執行一次（組件掛載後）
-     * 這裡將 mounted 設為 true，表示 client 已經準備好
-     * 之後可以安全地 render 依賴 window / client-only 的內容
-     */
+    const [storedUsername, setStoredUsername] = useState<string | null>(null);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const historyListRef = useRef<HTMLDivElement | null>(null);
+    const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+    useEffect(() => setMounted(true), []);
     useEffect(() => {
-        setMounted(true);
+        const savedUsername = localStorage.getItem(USERNAME_STORAGE_KEY);
+        setStoredUsername(savedUsername);
+
+        const handleStorage = () => {
+            setStoredUsername(localStorage.getItem(USERNAME_STORAGE_KEY));
+        };
+
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
     }, []);
 
+    const closeMenu = useCallback(() => {
+        setOpenMenuId(null);
+        menuButtonRef.current = null;
+        setMenuPosition(null);
+    }, []);
+
+    useEffect(() => {
+        const handleClickAway = () => closeMenu();
+        window.addEventListener("click", handleClickAway);
+        return () => window.removeEventListener("click", handleClickAway);
+    }, [closeMenu]);
+
+    useEffect(() => {
+        if (!openMenuId || !menuButtonRef.current) {
+            return;
+        }
+
+        const updatePosition = () => {
+            const target = menuButtonRef.current;
+            if (!target) return;
+
+            const rect = target.getBoundingClientRect();
+            setMenuPosition({
+                top: rect.bottom + 15,
+                left: rect.right,
+            });
+        };
+
+        updatePosition();
+        window.addEventListener("resize", updatePosition);
+        window.addEventListener("scroll", updatePosition);
+        const historyListEl = historyListRef.current;
+        historyListEl?.addEventListener("scroll", updatePosition);
+
+        return () => {
+            window.removeEventListener("resize", updatePosition);
+            window.removeEventListener("scroll", updatePosition);
+            historyListEl?.removeEventListener("scroll", updatePosition);
+        };
+    }, [openMenuId]);
+
+    const handleMenuToggle = (event: MouseEvent<HTMLButtonElement>, historyId: string) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (openMenuId === historyId) {
+            closeMenu();
+            return;
+        }
+
+        menuButtonRef.current = event.currentTarget;
+        const rect = event.currentTarget.getBoundingClientRect();
+        setMenuPosition({
+            top: rect.bottom + 15,
+            left: rect.right,
+        });
+        setOpenMenuId(historyId);
+    };
+
+    const renderNavLink = (item: (typeof navItems)[number]) => {
+        const active = normalizePath(pathname) === normalizePath(item.href);
+        return (
+            <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all duration-200 border border-transparent ${
+                    active
+                        ? "bg-white/15 text-white shadow-[0_10px_40px_rgba(59,130,246,0.35)] border-white/30"
+                        : "text-slate-300 hover:text-white hover:bg-white/10"
+                }`}
+            >
+                <span className={active ? "text-white" : "text-slate-400"}>{item.icon}</span>
+                <span className="tracking-wide">{item.name}</span>
+            </Link>
+        );
+    };
+
     return (
-        <div className="flex h-screen bg-gray-100">
-            {/* Sidebar 左側菜單欄：容器：固定寬度 64，漸層背景，白字，垂直排列 */}
-            <aside className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col shadow-lg">
-                {/* Sidebar 標題區：高度 16，底線邊框 */}
-                <div className="flex items-center justify-center h-16 border-b border-gray-700">
-                    {/* Logo 或標題 */}
-                    <span className="text-2xl font-bold tracking-wide">
-                        WITS<span className="text-blue-400"> HUB</span>
-                    </span>
-                </div>
+        <div className="relative min-h-screen overflow-hidden bg-[#05070c] text-white">
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="aurora aurora1" />
+                <div className="aurora aurora2" />
+                <div className="aurora aurora3" />
+                <div className="aurora aurora4" />
+                <div className="grid-pattern opacity-[0.15]" />
+            </div>
 
-                {/* Sidebar 導航區：自動撐滿剩餘空間，padding，間距，允許滾動 */}
-                <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-                    {/* 導航：聊天室頁面連結，當前路由高亮 */}
-                    <Link
-                        href={navItems[0].href}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors duration-200 ${
-                            isNavItemActive(navItems[0].href) 
-                                ? "bg-blue-500/20 text-blue-300" 
-                                : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                        }`}
-                    >
-                        {navItems[0].icon}
-                        <span>{navItems[0].name}</span>
-                    </Link>
-
-                    {/* 歷史紀錄 */}
-                    <div
-                        className="flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white"
-                        onClick={() => setHistoryExpanded(!historyExpanded)}
-                    >
-                        {/* 歷史對話展開/收合按鈕，點擊切換 historyExpanded 狀態 */}
-                        <div className="flex items-center gap-3">
-                            {navItems[1].icon}
-                            <span>{navItems[1].name}</span>
+            <div className="relative z-10 flex h-screen flex-col lg:flex-row">
+                <aside className="w-full lg:w-80 flex-shrink-0 p-4 sm:p-6">
+                    <GlassPanel className="flex h-full flex-col px-5 py-6 gap-6">
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">WitsHub</p>
+                            <p className="text-2xl font-light text-white mt-1">企業智庫</p>
+                            <p className="text-sm text-slate-300 mt-2">All in AI. All in One.</p>
                         </div>
-                        {/*展開：箭頭向下、收起：箭頭向右*/}
-                        {historyExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    </div>
 
-                    {/* 歷史對話列表：展開時顯示，無歷史顯示提示，有歷史則列出每筆對話 */}
-                    {mounted && historyExpanded && (
-                        <ul className="ml-7 mt-2 space-y-1">
-                            {historyList.length === 0 && <li className="text-gray-400 text-sm">尚無歷史對話</li>}
-                            {historyList.map(h => (
-                                <li key={h.id}>
-                                    <Link
-                                        href={`/dashboard/history/${h.id}`}
-                                        className={`block px-3 py-1 rounded text-sm hover:bg-gray-700 hover:text-white ${
-                                            normalizePath(pathname) === `/dashboard/history/${h.id}` 
-                                                ? "bg-blue-500/20 text-blue-300" 
-                                                : ""
-                                        }`}
-                                    >
-                                        {h.title.length > 20 ? h.title.slice(0, 20) + "…" : h.title}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                        <div className="flex flex-col gap-2">
+                            <nav className="space-y-3">{navItems.map(renderNavLink)}</nav>
 
-                    {/* 導航：個人資料頁面連結，當前路由高亮 */}
-                    <Link
-                        href={navItems[2].href}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors duration-200 ${
-                            isNavItemActive(navItems[2].href) 
-                                ? "bg-blue-500/20 text-blue-300" 
-                                : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                        }`}
-                    >
-                        {navItems[2].icon}
-                        <span>{navItems[2].name}</span>
-                    </Link>
-                </nav>
+                            <div>
+                                <button
+                                    className="flex w-full items-center justify-between px-4 py-3 rounded-2xl text-sm text-slate-200 hover:bg-white/10 transition border border-transparent hover:border-white/5"
+                                    onClick={() => setHistoryExpanded(prev => !prev)}
+                                >
+                                    <span className="flex items-center gap-3">
+                                        <Clock size={16} className="text-slate-400" />
+                                        {t("history.title")}
+                                    </span>
+                                    {historyExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                </button>
 
-                {/* Sidebar 底部資訊區：版本或公司名稱 */}
-                <div className="p-4 border-t border-gray-700 text-sm text-gray-400">
-                    <p>WITS IT</p>
-                    <p className="text-xs text-gray-500 mt-1">v1.0.0</p>
-                </div>
-            </aside>
+                                {mounted && historyExpanded && (
+                                <div
+                                    ref={historyListRef}
+                                    className="mt-3 max-h-[45vh] overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                                >
+                                        {historyList.length === 0 && (
+                                            <p className="text-xs text-slate-400 px-3 py-2 rounded-2xl bg-white/5 border border-white/5">
+                                                尚無歷史對話
+                                            </p>
+                                        )}
+                                        {historyList.map(history => {
+                                            const href = `/dashboard/history/${history.id}`;
+                                            const active = normalizePath(pathname) === normalizePath(href);
+                                            const isMenuOpen = openMenuId === history.id;
+                                            return (
+                                                <div key={history.id} className="relative group">
+                                                    <Link
+                                                        href={href}
+                                                        className={`block px-4 py-3 pr-12 rounded-2xl text-xs transition ${
+                                                            active
+                                                                ? "bg-white/15 text-white"
+                                                                : "bg-transparent text-slate-300 hover:text-white hover:bg-white/10"
+                                                        }`}
+                                                    >
+                                                        {history.title.length > 12 ? `${history.title.slice(0, 12)}…` : history.title}
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        aria-label="更多選項"
+                                                        onClick={event => handleMenuToggle(event, history.id)}
+                                                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/70 transition ${
+                                                            active || isMenuOpen
+                                                                ? "opacity-100 pointer-events-auto bg-white/15"
+                                                                : "opacity-0 pointer-events-none bg-black/30 group-hover:opacity-100 group-hover:pointer-events-auto"
+                                                        }`}
+                                                    >
+                                                        <MoreHorizontal size={16} />
+                                                    </button>
+                                                    {isMenuOpen && mounted && menuPosition &&
+                                                        createPortal(
+                                                            <div
+                                                                className="fixed z-50 w-20 rounded-lg border border-white/60 bg-white/85 text-slate-900 backdrop-blur-lg p-2 shadow-2xl transform -translate-x-full"
+                                                                style={{ top: menuPosition.top, left: menuPosition.left }}
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                className="w-full text-center px-3 py-1.5 rounded-lg text-xs text-slate-700 hover:bg-slate-200"
+                                                                    onClick={event => {
+                                                                        event.preventDefault();
+                                                                        event.stopPropagation();
+                                                                        closeMenu();
+                                                                    }}
+                                                                >
+                                                                    分享
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                className="w-full text-center px-3 py-1.5 rounded-lg text-xs text-red-600 hover:bg-red-100"
+                                                                    onClick={event => {
+                                                                        event.preventDefault();
+                                                                        event.stopPropagation();
+                                                                        removeHistory(history.id);
+                                                                        const currentPath = normalizePath(pathname);
+                                                                        const deletedPath = normalizePath(`/dashboard/history/${history.id}`);
+                                                                        if (currentPath === deletedPath) {
+                                                                            router.push("/dashboard");
+                                                                        }
+                                                                        closeMenu();
+                                                                    }}
+                                                                >
+                                                                    刪除
+                                                                </button>
+                                                            </div>,
+                                                            document.body
+                                                        )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
-            {/* 主要內容區：flex-1 自動撐滿，padding，允許滾動 */}
-            <main className="flex-1 pt-11 px-10 pb-10 overflow-y-auto">
-                {/*全局右上角的區塊*/}
-                <div className="absolute top-2 right-10 z-10">
-                    {/*地球：可切換語系*/}
-                    <LanguageSwitcher />
-                    {/*登出*/}
-                    <LogoutButton />
-                </div>
-                {/* 內容卡片容器：白底、圓角、陰影、padding */}
-                <div className="bg-white shadow-sm rounded-2xl p-8 h-full border border-gray-200">
-                    {children}
-                </div>
-            </main>
+                        <div className="mt-auto pt-4 border-t border-white/5">
+                            <div className="flex items-center justify-between px-2 pb-4">
+                                <LanguageSwitcher />
+                                <LogoutButton />
+                            </div>
+                            <Link
+                                href="/dashboard/profile"
+                                className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-sm font-medium text-white bg-white/15 hover:bg-white/20 transition"
+                            >
+                                <img src="/pic-1.png" alt="使用者頭像" className="w-8 h-8 rounded-full object-cover" />
+                                <span>{storedUsername ?? "個人資料"}</span>
+                            </Link>
+                        </div>
+                    </GlassPanel>
+                </aside>
+
+                <main className="flex-1 flex flex-col p-4 sm:p-10 gap-6 overflow-hidden">
+                    <GlassPanel className="flex-1 p-4 sm:p-8 overflow-hidden">
+                        <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                            {children}
+                        </div>
+                    </GlassPanel>
+                </main>
+            </div>
+
+            <style jsx>{`
+                .aurora {
+                    position: absolute;
+                    width: 45%;
+                    height: 45%;
+                    filter: blur(120px);
+                    opacity: 0.28;
+                    animation: auroraMove 12s ease-in-out infinite alternate;
+                    border-radius: 999px;
+                }
+
+                .aurora1 {
+                    background: #4ea8ff;
+                    top: -10%;
+                    left: -20%;
+                }
+                .aurora2 {
+                    background: #a855f7;
+                    top: 35%;
+                    right: -15%;
+                    animation-delay: -4s;
+                }
+                .aurora3 {
+                    background: #38bdf8;
+                    bottom: -20%;
+                    left: 5%;
+                    animation-delay: -7s;
+                }
+                .aurora4 {
+                    background: #6366f1;
+                    bottom: 5%;
+                    right: 10%;
+                    animation-delay: -11s;
+                }
+
+                .grid-pattern {
+                    width: 100%;
+                    height: 100%;
+                    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0);
+                    background-size: 120px 120px;
+                }
+
+                @keyframes auroraMove {
+                    0% {
+                        transform: translate(0, 0) scale(1);
+                    }
+                    50% {
+                        transform: translate(160px, -120px) scale(1.25);
+                    }
+                    100% {
+                        transform: translate(-60px, 80px) scale(1);
+                    }
+                }
+            `}</style>
         </div>
     );
 }
 
-// DashboardLayout 元件，用 HistoryProvider 包裹整個 DashboardContent
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <HistoryProvider>
