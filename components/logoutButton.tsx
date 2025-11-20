@@ -20,7 +20,7 @@ export function LogoutButton() {
         <Button
             type="button"
             variant="ghost"
-            className="inline-flex items-center gap-1 p-2 rounded hover:bg-muted/50"
+            className="inline-flex items-center gap-1 p-2 rounded hover:bg-transparent hover:text-inherit"
             onClick={handleLogout}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}

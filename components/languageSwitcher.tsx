@@ -32,7 +32,7 @@ export function LanguageSwitcher() {
     return (
         <DropdownMenu onOpenChange={setOpen}>
             <DropdownMenuTrigger
-                className="inline-flex items-center gap-1 p-2 rounded focus:outline-none hover:bg-muted/50"
+                className="inline-flex items-center gap-1 p-2 rounded focus:outline-none"
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
             >
@@ -45,7 +45,7 @@ export function LanguageSwitcher() {
             <DropdownMenuContent
                 side="right"
                 align="start"
-                className="border-white/60 bg-white/95 text-slate-900 rounded-2xl shadow-2xl p-2 w-28 -translate-y-5"
+                className="border-white/60 bg-white/85 text-slate-900 rounded-2xl shadow-2xl p-2 w-28 -translate-y-5"
             >
                 {languages.map((lang) => {
                     const isActive = locale === lang.code;

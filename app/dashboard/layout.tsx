@@ -179,10 +179,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                 <div key={history.id} className="relative group">
                                                     <Link
                                                         href={href}
-                                                        className={`block px-4 py-3 pr-12 rounded-2xl text-xs border transition ${
+                                                        className={`block px-4 py-3 pr-12 rounded-2xl text-xs transition ${
                                                             active
-                                                                ? "bg-white/15 border-white/40 text-white"
-                                                                : "bg-transparent border-transparent text-slate-300 hover:text-white hover:border-white/30 hover:bg-white/10"
+                                                                ? "bg-white/15 text-white"
+                                                                : "bg-transparent text-slate-300 hover:text-white hover:bg-white/10"
                                                         }`}
                                                     >
                                                         {history.title.length > 12 ? `${history.title.slice(0, 12)}…` : history.title}
@@ -202,7 +202,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                     {isMenuOpen && mounted && menuPosition &&
                                                         createPortal(
                                                             <div
-                                                                className="fixed z-50 w-20 rounded-lg border border-white/60 bg-white/95 text-slate-900 backdrop-blur-lg p-2 shadow-2xl transform -translate-x-full"
+                                                                className="fixed z-50 w-20 rounded-lg border border-white/60 bg-white/85 text-slate-900 backdrop-blur-lg p-2 shadow-2xl transform -translate-x-full"
                                                                 style={{ top: menuPosition.top, left: menuPosition.left }}
                                                             >
                                                                 <button
@@ -251,7 +251,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                             </div>
                             <Link
                                 href="/dashboard/profile"
-                                className="flex items-center justify-center gap-3 px-4 py-3 w-full rounded-2xl text-sm font-medium text-white bg-white/15 border border-white/30 hover:bg-white/20 transition"
+                                className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-sm font-medium text-white bg-white/15 hover:bg-white/20 transition"
                             >
                                 <img src="/pic-1.png" alt="使用者頭像" className="w-8 h-8 rounded-full object-cover" />
                                 <span>{storedUsername ?? "個人資料"}</span>
