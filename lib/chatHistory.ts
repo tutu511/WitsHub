@@ -83,6 +83,7 @@ export const getChatById = (chatId: string | Array<string>): ChatHistory | null 
     return list.find(h => h.id === chatId) || null;
 };
 
+// 根據 chatId 刪除某一筆紀錄
 export const deleteHistory = (chatId: string) => {
     if (typeof window === "undefined" || typeof localStorage === "undefined") return;
     const list: ChatHistory[] = JSON.parse(localStorage.getItem("chat-history") || "[]");

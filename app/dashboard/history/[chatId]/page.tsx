@@ -242,10 +242,13 @@ export default function ChatPage() {
             {/* 下方輸入框 + 送出按鈕 */}
             <div className="mt-4 flex gap-2">
                 <input
+                    // 輸入框的值
                     value={input}
+                    // 更新 input state
                     onChange={e => setInput(e.target.value)}
                     onCompositionStart={() => setIsComposing(true)}
                     onCompositionEnd={() => setIsComposing(false)}
+                    // 按 Enter 送出
                     onKeyDown={e => {
                         const composing =
                             isComposing ||
@@ -255,6 +258,7 @@ export default function ChatPage() {
                             sendMessage();
                         }
                     }}
+                    // 提示文字
                     placeholder={t("chat.placeholder")}
                     className="flex-1 rounded-xl border border-white/30 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
                 />
