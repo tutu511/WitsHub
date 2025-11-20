@@ -10,6 +10,8 @@ const DEMO_ACCOUNTS = [
   { username: "def", password: "456" },
 ];
 
+const USERNAME_STORAGE_KEY = "witsHubUsername";
+
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,10 @@ export default function LoginPage() {
       (acc) => acc.username === username && acc.password === password
     );
 
-    if (isValid) router.push("/dashboard");
+    if (isValid) {
+      localStorage.setItem(USERNAME_STORAGE_KEY, username);
+      router.push("/dashboard");
+    }
     else {
       setError("帳號或密碼錯誤");
       setIsLoading(false);
@@ -53,7 +58,7 @@ export default function LoginPage() {
               WitsHub
             </h1>
             <p className="text-slate-300 text-sm tracking-wide">
-              緯創軟體企業智庫
+              All in AI. All in One.
             </p>
           </div>
 
