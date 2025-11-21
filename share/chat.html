@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天分享頁面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 16px;
+            background: #f9f9f9;
+        }
+        .msg-user {
+            color: blue;
+            margin-bottom: 8px;
+        }
+        .msg-bot {
+            color: green;
+            margin-bottom: 8px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase App (the core Firebase SDK)
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getFirestore, getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD39JXDwlm7Tb5xqQtZuk1yi2vymUwIkfk",
+            authDomain: "witshub-ef85e.firebaseapp.com",
+            projectId: "witshub-ef85e",
+            storageBucket: "witshub-ef85e.firebasestorage.app",
+            messagingSenderId: "1015889013218",
+            appId: "1:1015889013218:web:c823f8b373ddece0ae31bb",
+            measurementId: "G-JX7K6S9078"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 從 URL 拿 chatId
+        const params = new URLSearchParams(window.location.search);
+        const chatId = params.get("id");
+
+        const container = document.querySelector(".container");
+
+        if (chatId) {
+            const docRef = doc(db, "share_history", chatId);
+            getDoc(docRef).then(docSnap => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // 清空 container
+                    container.innerHTML = "";
+                    // message 是陣列
+                    data.message.forEach(msg => {
+                        const div = document.createElement("div");
+                        if (msg.startsWith("user：")) {
+                            div.className = "msg-user";
+                        } else {
+                            div.className = "msg-bot";
+                        }
+                        div.textContent = msg;
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = "<p>找不到此聊天記錄</p>";
+                }
+            }).catch(err => {
+                console.error(err);
+                container.innerHTML = "<p>讀取聊天資料發生錯誤</p>";
+            });
+        } else {
+            container.innerHTML = "<p>無效的聊天 ID</p>";
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <p>正在載入聊天資料...</p>
+</div>
+</body>
+</html>
