@@ -17,6 +17,7 @@ import { HistoryProvider, useHistory } from "./context/historyContext";
 import { LanguageSwitcher } from "@/components/languageSwitcher";
 // 登出按鈕
 import { LogoutButton } from "@/components/logoutButton";
+import { ShareChatDialog } from "@/components/shareChatDialog";
 
 const USERNAME_STORAGE_KEY = "witsHubUsername";
 
@@ -58,6 +59,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const menuButtonRef = useRef<HTMLButtonElement | null>(null);
     // menu 的絕對定位
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+    // 是否點擊了分享
+    const [isOpenShare, setOpenShare] = useState(false);
+    // 選擇的聊天 ID
+    const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
     /**
      * useEffect 只會在 client 端執行一次（組件掛載後）
      * 這裡將 mounted 設為 true，表示 client 已經準備好
@@ -292,6 +297,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                                         event.stopPropagation();
                                                                         // 關閉 menu 歷史紀錄的紀錄
                                                                         closeMenu();
+                                                                        // 設定要分享的對話 id
+                                                                        setSelectedChatId(history.id);
+                                                                        // 打開二維碼彈窗
+                                                                        setOpenShare(true);
                                                                     }}
                                                                 >
                                                                     分享
@@ -351,6 +360,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
                 {/* 主內容區 */}
                 <main className="flex-1 flex flex-col p-4 sm:p-10 gap-6 overflow-hidden">
+                    {/*是否要顯示分享的二維碼*/}
+                    { isOpenShare && selectedChatId != null && (
+                        <ShareChatDialog
+                            chatId={ selectedChatId }
+                            onClose={() => setOpenShare(false)}
+                        />
+                    )}
                     {/* 內容外殼 */}
                     <GlassPanel className="flex-1 p-4 sm:p-8 overflow-hidden">
                         {/* 真正的頁面內容由 children 傳入 */}
