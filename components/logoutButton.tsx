@@ -3,8 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-
-const USERNAME_STORAGE_KEY = "witsHubUsername";
+import {removeUser} from "@/lib/user";
 
 export function LogoutButton() {
     const router = useRouter();
@@ -12,7 +11,7 @@ export function LogoutButton() {
 
     const handleLogout = useCallback(() => {
         // 只清除登入使用者資訊，保留 localStorage 內的對話紀錄
-        localStorage.removeItem(USERNAME_STORAGE_KEY);
+        removeUser();
         router.push("/login");
     }, [router]);
 

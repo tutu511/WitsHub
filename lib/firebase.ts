@@ -1,7 +1,7 @@
 // lib/firebase.ts
 import { initializeApp, getApps } from "firebase/app";
 import {getFirestore, collection, addDoc, doc, setDoc} from "firebase/firestore";
-import { firebaseConfig } from "./config";
+import {firebaseConfig, SHARE_HISTORY_KEY} from "./config";
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
@@ -21,7 +21,8 @@ export const saveChatToFirestore = async (
     title: string,
     creatorName: string
 ) => {
-    const docRef = doc(db, "share_history", chatId); // 用 chatId 當 document ID
+    // 用 chatId 當 document ID
+    const docRef = doc(db, SHARE_HISTORY_KEY, chatId);
     await setDoc(docRef, {
         id: chatId,
         message: messages,
