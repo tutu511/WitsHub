@@ -202,10 +202,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* 主要 layout：側邊欄 + 主要內容 */}
-            <div className="relative z-10 flex h-screen flex-col lg:flex-row">
-                <aside className="w-full lg:w-80 flex-shrink-0 p-4 sm:p-6">
+            <div className="relative z-10 flex h-screen min-h-0 flex-col lg:flex-row">
+                <aside className="w-full lg:w-80 flex-shrink-0 p-4 sm:p-6 min-h-0">
                     {/* 使用 GlassPanel 包裹內容 */}
-                    <GlassPanel className="flex h-full flex-col px-5 py-6 gap-6">
+                    <GlassPanel className="flex h-full min-h-0 flex-col overflow-hidden px-5 py-6 gap-6">
                         {/* 標題 */}
                         <div>
                             <p className="text-xs uppercase tracking-[0.4em] text-slate-400">WitsHub</p>
@@ -213,11 +213,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                             <p className="text-sm text-slate-300 mt-2">All in AI. All in One.</p>
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
                             {/* 導航項目列表 */}
                             <nav className="space-y-3">{navItems.map(renderNavLink)}</nav>
 
-                            <div>
+                            <div className="flex-1 min-h-0 flex flex-col">
                                 <button
                                     className="flex w-full items-center justify-between px-4 py-3 rounded-2xl text-sm text-slate-200 hover:bg-white/10 transition border border-transparent hover:border-white/5"
                                     // 切換 history 展開
@@ -234,10 +234,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
                                 {/*只有在 client 掛載完成且展開時才 render 列表*/}
                                 {mounted && historyExpanded && (
-                                <div
-                                    ref={historyListRef}
-                                    className="mt-3 max-h-[45vh] overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
-                                >
+                                    <div
+                                        ref={historyListRef}
+                                        className="mt-3 flex-1 min-h-0 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                                    >
                                         {/*如果沒有歷史顯示提示*/}
                                         {historyList.length === 0 && (
                                             <p className="text-xs text-slate-400 px-3 py-2 rounded-2xl bg-white/5 border border-white/5">
@@ -359,7 +359,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </aside>
 
                 {/* 主內容區 */}
-                <main className="flex-1 flex flex-col p-4 sm:p-10 gap-6 overflow-hidden">
+                <main className="flex-1 min-h-0 flex flex-col p-4 sm:p-10 gap-6 overflow-hidden">
                     {/*是否要顯示分享的二維碼*/}
                     { isOpenShare && selectedChatId != null && (
                         <ShareChatDialog
@@ -368,7 +368,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                         />
                     )}
                     {/* 內容外殼 */}
-                    <GlassPanel className="flex-1 p-4 sm:p-8 overflow-hidden">
+                    <GlassPanel className="flex-1 min-h-0 p-4 sm:p-8 overflow-hidden">
                         {/* 真正的頁面內容由 children 傳入 */}
                         <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                             {children}
