@@ -2,5 +2,6 @@
   "chat.title": "new chat",
   "history.title": "history",
   "profile.title": "Profile",
-  "chat.placeholder": "Please enter your question..."
+  "chat.placeholder": "Please enter your question...",
+  "chat.placeholder.disabled": "Recording in progress, input disabled..."
 }

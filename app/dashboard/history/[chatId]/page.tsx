@@ -5,13 +5,14 @@ import { useState, useRef, useEffect } from "react";
 // useParams 用來取得動態路由參數
 import { useParams } from "next/navigation";
 // 匯入圖示
-import { SendHorizontal, Pause } from "lucide-react";
+import {SendHorizontal, Pause, Ban} from "lucide-react";
 // 匯入 chatHistory 方法與型別
 import { getChatById, saveHistory, Message } from "@/lib/chatHistory";
 // 匯入自訂的歷史紀錄 context
 import { useHistory } from "../../context/historyContext";
 // 多語系
 import { useI18n } from "@/components/i18n-provider";
+import VoiceTransformText from "@/components/voiceTransformText";
 
 // 定義 ChatPage 元件
 export default function ChatPage() {
@@ -41,6 +42,8 @@ export default function ChatPage() {
     const typingInterval = useRef<NodeJS.Timeout | null>(null);
     // ref：指向訊息列表容器，讓滾動侷限在該區域
     const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+    // 語音是否正在識別
+    const [isListening, setIsListening] = useState(false);
 
     // 滾動到訊息最底部
     const scrollToBottom = () => {
@@ -241,6 +244,19 @@ export default function ChatPage() {
 
             {/* 下方輸入框 + 送出按鈕 */}
             <div className="mt-4 flex gap-2">
+                {/* 語音轉文字按鈕 */}
+                <VoiceTransformText
+                    onResult={
+                        (voiceText) => {
+                            setInput((prev) => prev + voiceText)
+                        }}
+                    onListeningChange={
+                        (isListening) => {
+                            // 語音是否正在識別中，若為 true ，發送按鈕事件需禁止
+                            setIsListening(isListening)
+                        }
+                    }
+                />
                 <input
                     // 輸入框的值
                     value={input}
@@ -259,8 +275,13 @@ export default function ChatPage() {
                         }
                     }}
                     // 提示文字
-                    placeholder={t("chat.placeholder")}
+                    placeholder={
+                        isListening
+                            ? t("chat.placeholder.disabled")
+                            : t("chat.placeholder")
+                    }
                     className="flex-1 rounded-xl border border-white/30 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
+                    disabled={isListening}
                 />
                 {/* 送出 / 停止按鈕 */}
                 <button
@@ -268,10 +289,17 @@ export default function ChatPage() {
                     className={`px-6 py-2 rounded-xl text-sm flex items-center justify-center border border-white/30 text-white transition ${
                         isTyping ? "bg-white/10 hover:bg-white/20" : "bg-white/20 hover:bg-white/30"
                     }`}
+                    // 語音不能正在識別中
+                    disabled={isListening}
                 >
-                    {isTyping
-                        ? <Pause size={20} />
-                        : <SendHorizontal size={20} />}
+                    { isTyping
+                        ? (<Pause size={20} />)
+                        : ( isListening
+                            // 錄音中 → 顯示禁止 icon
+                            ? <Ban size={20} />
+                            // 平常 → 顯示發送 icon
+                            : <SendHorizontal size={20} />)
+                    }
                 </button>
             </div>
         </div>
