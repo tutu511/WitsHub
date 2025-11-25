@@ -6,13 +6,15 @@ import { useState } from "react";
 // 引入 Next.js 的 useRouter（新的 app router 版本）以做程式化導向
 import { useRouter } from "next/navigation";
 // 發送按鈕的 icon
-import { SendHorizontal, Sparkles } from "lucide-react";
+import { SendHorizontal, Sparkles, Ban } from "lucide-react";
 // 用來操作歷史（新增/查詢）
 import { useHistory } from "./context/historyContext";
 // 引入類型（或介面）Message，用來定義訊息資料結構
 import { Message } from "@/lib/chatHistory";
 // 多語系
 import { useI18n } from "@/components/i18n-provider";
+// 語音轉文字
+import VoiceTransformText from "@/components/voiceTransformText";
 
 // 匯出預設元件：NewChatPage
 export default function NewChatPage() {
@@ -22,6 +24,8 @@ export default function NewChatPage() {
     const [input, setInput] = useState("");
     // 註音打字的回車
     const [isComposing, setIsComposing] = useState(false);
+    // 語音是否正在識別
+    const [isListening, setIsListening] = useState(false);
     // 取得 router 實例，用於導頁（導航）
     const router = useRouter();
     // 從 history context 取得 addHistory 函式，用來新增歷史對話
@@ -61,10 +65,23 @@ export default function NewChatPage() {
                 <h2 className="text-4xl font-light">向 WitsHub 提問，讓多領域 AI 專家為你協作解答</h2>
             </div>
 
-            {/*輸入框*/}
             <div className="w-full max-w-3xl">
                 <div >
                     <div className="mt-2 flex gap-2">
+                        {/* 語音轉文字按鈕 */}
+                        <VoiceTransformText
+                            onResult={
+                                (voiceText) => {
+                                    setInput((prev) => prev + voiceText)
+                                }}
+                            onListeningChange={
+                                (isListening) => {
+                                    // 語音是否正在識別中，若為 true ，發送按鈕事件需禁止
+                                    setIsListening(isListening)
+                                }
+                            }
+                        />
+                        {/*輸入框*/}
                         <input
                             value={input}
                             onChange={e =>
@@ -87,18 +104,28 @@ export default function NewChatPage() {
                                 }
                             }}
                             // 提示文字
-                            placeholder={t("chat.placeholder")}
+                            placeholder={
+                                isListening
+                                    ? t("chat.placeholder.disabled")
+                                    : t("chat.placeholder")
+                            }
                             className="flex-1 rounded-xl border border-white/30 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
+                            disabled={isListening}
                         />
                         {/*發送按鈕*/}
                         <button
                             // 點擊時觸發發送事件
                             onClick={handleSend}
                             className="px-6 py-2 rounded-xl text-sm flex items-center justify-center border border-white/30 text-white transition bg-white/20 hover:bg-white/30 disabled:opacity-50"
-                            disabled={!input.trim()}
+                            // 輸入內容不能為空，語音不能正在識別中
+                            disabled={!input.trim() || isListening}
                         >
-                            {/*發送 icon*/}
-                            <SendHorizontal size={20} />
+                            { isListening
+                                // 錄音中 → 顯示禁止 icon
+                                ? <Ban size={20} />
+                                // 平常 → 顯示發送 icon
+                                : <SendHorizontal size={20} />
+                            }
                         </button>
                     </div>
                 </div>
