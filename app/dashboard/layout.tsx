@@ -18,8 +18,7 @@ import { LanguageSwitcher } from "@/components/languageSwitcher";
 // 登出按鈕
 import { LogoutButton } from "@/components/logoutButton";
 import { ShareChatDialog } from "@/components/shareChatDialog";
-
-const USERNAME_STORAGE_KEY = "witsHubUsername";
+import {getPersonName} from "@/lib/user";
 
 const GlassPanel = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
     <div className={`backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(15,23,42,0.45)] ${className}`}>
@@ -72,13 +71,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     // 只在初次掛載時執行
     useEffect(() => {
         // 從 localStorage 取得 username
-        const savedUsername = localStorage.getItem(USERNAME_STORAGE_KEY);
+        const savedUsername = getPersonName();
         // 設定到 state
         setStoredUsername(savedUsername);
 
         const handleStorage = () => {
             // 同步更新（跨 tab 的 storage 事件）
-            setStoredUsername(localStorage.getItem(USERNAME_STORAGE_KEY));
+            setStoredUsername(getPersonName());
         };
 
         // 監聽 storage 事件

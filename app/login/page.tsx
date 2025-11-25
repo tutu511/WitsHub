@@ -1,16 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { User, saveUser } from "@/lib/user";
 
 // Demo 帳號密碼配置
-const DEMO_ACCOUNTS = [
-  { username: "TP2412020", password: "zaq12wsx" },
-  { username: "abc", password: "123" },
-  { username: "def", password: "456" },
+const DEMO_ACCOUNTS : User[] = [
+  { username: "TP2509034", password: "zaq12wsx", email:"CindyYang1@wits.com", personName: "王芸若"},
+  { username: "abc", password: "123", email:"CindyYang2@wits.com", personName: "測試者1"},
+  { username: "def", password: "456", email:"CindyYang3@wits.com", personName: "測試者2"},
 ];
-
-const USERNAME_STORAGE_KEY = "witsHubUsername";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -26,12 +25,13 @@ export default function LoginPage() {
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const isValid = DEMO_ACCOUNTS.some(
-      (acc) => acc.username === username && acc.password === password
+    const account = DEMO_ACCOUNTS.find(
+        (acc) => acc.username === username && acc.password === password
     );
 
-    if (isValid) {
-      localStorage.setItem(USERNAME_STORAGE_KEY, username);
+    if (account) {
+      // 將用戶信息保存到 localstorage
+      saveUser(account);
       router.push("/dashboard");
     }
     else {

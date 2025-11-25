@@ -18,6 +18,7 @@ import { saveChatToFirestore } from "@/lib/firebase";
  *
  */
 import QRCode from "react-qr-code";
+import {getPersonName} from "@/lib/user";
 
 // 傳入聊天的 id
 type ShareChatDialogProps = {
@@ -28,6 +29,8 @@ type ShareChatDialogProps = {
 export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
     // 儲存要生成 QR 的 URL
     const [shareUrl, setShareUrl] = useState("");
+    // 獲取當前登錄的用戶(從 localStorage 取得 username)
+    const personId = getPersonName();
 
     // 處理分享聊天的事件
     const handleShare = async () => {
@@ -44,7 +47,7 @@ export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
 
         if (!Array.isArray(chatId)) {
             // 儲存到 Firestore
-            await saveChatToFirestore(chatId, messagesText, chat.title, "tutu");
+            await saveChatToFirestore(chatId, messagesText, chat.title, personId || "訪客");
         }
 
         // 生成分享 URL，這裡用 GitHub Pages 頁面

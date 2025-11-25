@@ -2,18 +2,19 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-
-const USERNAME_STORAGE_KEY = "witsHubUsername";
+import {getUser, getPersonName} from "@/lib/user";
 
 export default function ProfilePage() {
-    const [username, setUsername] = useState<string>("");
+    const [personName, setPersonName] = useState<string>("訪客");
 
     useEffect(() => {
-        const stored = localStorage.getItem(USERNAME_STORAGE_KEY);
-        setUsername(stored ?? "");
+        const userInfo = getUser();
+        if (userInfo != null) {
+            setPersonName(getPersonName());
+        }
     }, []);
 
-    const displayName = username.trim() || "訪客";
+    const displayName = personName.trim();
 
     return (
         <div className="px-4 py-14 flex justify-center">
