@@ -4,27 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>聊天分享頁面</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.25), transparent 35%),
+                  radial-gradient(circle at 80% 0%, rgba(236,72,153,0.22), transparent 40%),
+                  #05070c;
+            --card: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.12);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --user: #60a5fa;
+            --bot: #a78bfa;
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
-            padding: 16px;
-            background: #f9f9f9;
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Space Grotesk", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+            background: #05070c;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 16px;
         }
-        .msg-user {
-            color: blue;
-            margin-bottom: 8px;
+        .glass {
+            width: min(900px, 100%);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--card);
+            box-shadow: 0 25px 80px rgba(5, 7, 12, 0.55);
+            backdrop-filter: blur(16px);
+            padding: 28px;
         }
-        .msg-bot {
-            color: green;
-            margin-bottom: 8px;
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
         }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.03em;
+        }
+        .messages {
+            margin-top: 14px;
+            display: grid;
+            gap: 16px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+        }
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .message.bot {
+            gap: 0;
+        }
+        .message.user {
+            flex-direction: row-reverse;
+            gap: 0;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .bubble {
+            padding: 12px 14px;
+            border-radius: 14px;
+            line-height: 1.6;
+            font-size: 14px;
+            word-break: break-word;
+            white-space: pre-wrap;
+            max-width: 66%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+        .bubble-user {
+            border: none;
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+        }
+        .bubble-bot {
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            color: #e5e7eb;
+        }
+        .muted {
+            color: var(--muted);
+            font-size: 14px;
+            text-align: center;
+            padding: 32px 12px;
+        }
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--muted);
+            animation: bounce 1.3s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.15s; }
+        .dot:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+            40% { transform: translateY(-6px); opacity: 1; }
         }
     </style>
     <!-- Firebase SDK -->
@@ -50,41 +172,63 @@
         const params = new URLSearchParams(window.location.search);
         const chatId = params.get("id");
 
-        const container = document.querySelector(".container");
+        const messagesEl = document.querySelector(".messages");
+
+        const showStatus = (text) => {
+            messagesEl.innerHTML = `<div class="muted">${text}</div>`;
+        };
+
+        const renderMessage = (msgText) => {
+            const isUser = msgText.startsWith("user：");
+            const content = msgText.replace(/^user：|^robot：/, "");
+            const wrapper = document.createElement("div");
+            wrapper.className = `message ${isUser ? "user" : "bot"}`;
+
+            const bubble = document.createElement("div");
+            bubble.className = `bubble ${isUser ? "bubble-user" : "bubble-bot"}`;
+            bubble.textContent = content;
+
+            wrapper.appendChild(bubble);
+            messagesEl.appendChild(wrapper);
+        };
 
         if (chatId) {
             const docRef = doc(db, "share_history", chatId);
             getDoc(docRef).then(docSnap => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // 清空 container
-                    container.innerHTML = "";
+                    // 清空
+                    messagesEl.innerHTML = "";
                     // message 是陣列
                     data.message.forEach(msg => {
-                        const div = document.createElement("div");
-                        if (msg.startsWith("user：")) {
-                            div.className = "msg-user";
-                        } else {
-                            div.className = "msg-bot";
-                        }
-                        div.textContent = msg;
-                        container.appendChild(div);
+                        renderMessage(msg);
                     });
                 } else {
-                    container.innerHTML = "<p>找不到此聊天記錄</p>";
+                    showStatus("找不到此聊天記錄");
                 }
             }).catch(err => {
                 console.error(err);
-                container.innerHTML = "<p>讀取聊天資料發生錯誤</p>";
+                showStatus("讀取聊天資料發生錯誤");
             });
         } else {
-            container.innerHTML = "<p>無效的聊天 ID</p>";
+            showStatus("無效的聊天 ID");
         }
     </script>
 </head>
 <body>
-<div class="container">
-    <p>正在載入聊天資料...</p>
-</div>
+<main class="glass">
+    <header>
+        <div class="title">分享的聊天內容</div>
+        <div class="pill">WitsHub</div>
+    </header>
+    <div class="messages">
+        <div class="muted">
+            <span class="loading">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                正在載入聊天資料...
+            </span>
+        </div>
+    </div>
+</main>
 </body>
 </html>
