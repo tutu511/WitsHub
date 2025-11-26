@@ -11,6 +11,7 @@ import { SendHorizontal, Sparkles, Ban } from "lucide-react";
 import { useHistory } from "./context/historyContext";
 // 引入類型（或介面）Message，用來定義訊息資料結構
 import { Message } from "@/lib/chatHistory";
+import { fetchChatTitle } from "@/lib/api";
 // 多語系
 import { useI18n } from "@/components/i18n-provider";
 // 語音轉文字
@@ -30,29 +31,6 @@ export default function NewChatPage() {
     const router = useRouter();
     // 從 history context 取得 addHistory 函式，用來新增歷史對話
     const { addHistory, renameHistory, clearTitleLoading } = useHistory();
-
-    const fetchChatTitle = async (question: string) => {
-        try {
-            const response = await fetch("https://uat-n8n.wits.com/webhook/generate-chat-title", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ question }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed with status ${response.status}`);
-            }
-
-            const data = await response.json();
-            const output = typeof data?.output === "string" ? data.output.trim() : "";
-            return { title: output || question, success: true };
-        } catch (error) {
-            console.error("generate-chat-title error:", error);
-            return { title: question, success: false };
-        }
-    };
 
     // 當使用者按下發送時執行的處理函式
     const handleSend = () => {
