@@ -5,22 +5,44 @@ import { useEffect, useState } from "react";
 import { User, getUser, getPersonRole } from "@/lib/user";
 import { deleteHistoryByPerson } from "@/lib/chatHistory";
 import { useHistory } from "@/app/dashboard/context/historyContext";
+import { getReplyPreference, saveReplyPreference } from "@/lib/preference";
 
 export default function ProfilePage() {
     const [userInfo, setUserInfo] = useState<User | null>(null);
     const [isClearing, setIsClearing] = useState(false);
+    const [replyPreference, setReplyPreference] = useState("");
+    const [isSavingPreference, setIsSavingPreference] = useState(false);
     const { refreshHistory } = useHistory();
 
     useEffect(() => {
         const stored = getUser();
         if (stored != null) {
             setUserInfo(stored);
+            setReplyPreference(getReplyPreference(stored.username));
         }
     }, []);
 
     const displayName = userInfo?.personName?.trim() || "訪客";
     const personId = userInfo?.username || "";
     const role = getPersonRole();
+
+    const handleCustomizeReplyPreference = () => {
+        if (!personId) return;
+        const promptValue = window.prompt(
+            "希望 AI 用什麼風格與語氣回覆？",
+            replyPreference || "範例：溫暖親切、條列式回覆重點"
+        );
+        if (promptValue === null) return;
+        const trimmed = promptValue.trim();
+
+        setIsSavingPreference(true);
+        try {
+            saveReplyPreference(personId, trimmed);
+            setReplyPreference(trimmed);
+        } finally {
+            setIsSavingPreference(false);
+        }
+    };
 
     const handleClearHistory = () => {
         if (!personId) return;
@@ -68,6 +90,27 @@ export default function ProfilePage() {
                     <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
                         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">角色</p>
                         <p className="text-xl font-semibold mt-2">{role}</p>
+                    </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-lg font-semibold">自訂風格與語氣</p>
+                            <p className="text-sm text-slate-300 mt-1">
+                                {replyPreference
+                                    ? `目前設定：${replyPreference}`
+                                    : "設定 AI 的回覆風格與語氣，讓對話更符合你的風格"}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleCustomizeReplyPreference}
+                            disabled={!personId || isSavingPreference}
+                            className="px-4 py-2 rounded-xl bg-slate-50/10 border border-white/15 hover:bg-slate-50/15 text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
+                        >
+                            {isSavingPreference ? "儲存中..." : "自訂風格與語氣"}
+                        </button>
                     </div>
                 </div>
 
