@@ -6,12 +6,14 @@ import {USER_STORAGE_KEY} from "@/lib/config";
  * password：密碼
  * email：郵箱
  * personName：姓名
+ * role：角色
  */
 export type User = {
     username: string,
     password: string,
     email: string,
     personName: string;
+    role?: string;
 };
 
 // 導向登入頁
@@ -49,6 +51,12 @@ export const getPersonName = (): string  => {
     const user = readStoredUser();
     return user?.personName || "訪客";
 }
+
+// 從 localstorage 獲取用戶角色
+export const getPersonRole = (): string => {
+    const user = readStoredUser();
+    return user?.role || "未設定";
+};
 
 // 從 localstorage 獲取用戶帳號（工號）
 export const getPersonId = (): string  => {

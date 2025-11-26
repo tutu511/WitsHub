@@ -2,34 +2,91 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import {getUser, getPersonName} from "@/lib/user";
+import { User, getUser, getPersonRole } from "@/lib/user";
+import { deleteHistoryByPerson } from "@/lib/chatHistory";
+import { useHistory } from "@/app/dashboard/context/historyContext";
 
 export default function ProfilePage() {
-    const [personName, setPersonName] = useState<string>("訪客");
+    const [userInfo, setUserInfo] = useState<User | null>(null);
+    const [isClearing, setIsClearing] = useState(false);
+    const { refreshHistory } = useHistory();
 
     useEffect(() => {
-        const userInfo = getUser();
-        if (userInfo != null) {
-            setPersonName(getPersonName());
+        const stored = getUser();
+        if (stored != null) {
+            setUserInfo(stored);
         }
     }, []);
 
-    const displayName = personName.trim();
+    const displayName = userInfo?.personName?.trim() || "訪客";
+    const personId = userInfo?.username || "";
+    const role = getPersonRole();
+
+    const handleClearHistory = () => {
+        if (!personId) return;
+        const confirmed = window.confirm("確定要刪除所有聊天記錄嗎？此動作無法復原。");
+        if (!confirmed) return;
+
+        setIsClearing(true);
+        try {
+            deleteHistoryByPerson(personId);
+            refreshHistory();
+        } finally {
+            setIsClearing(false);
+        }
+    };
 
     return (
-        <div className="px-4 py-14 flex justify-center">
-            <div className="flex flex-col items-center gap-4 text-white">
-                <div className="w-32 h-32 rounded-full overflow-hidden shadow-[0_20px_45px_rgba(59,130,246,0.45)] border border-white/10 bg-white/10">
-                    <Image
-                        src="/pic-1.png"
-                        alt={displayName || "使用者頭貼"}
-                        width={128}
-                        height={128}
-                        className="object-cover w-full h-full"
-                        priority
-                    />
+        <div className="px-4 py-10 flex justify-center">
+            <div className="w-full max-w-4xl space-y-8 text-white">
+                <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 rounded-full overflow-hidden shadow-[0_20px_45px_rgba(59,130,246,0.45)] border border-white/10 bg-white/10">
+                        <Image
+                            src="/pic-1.png"
+                            alt={displayName || "使用者頭貼"}
+                            width={96}
+                            height={96}
+                            className="object-cover w-full h-full"
+                            priority
+                        />
+                    </div>
+                    <div>
+                        <p className="text-3xl font-semibold mt-1">{displayName}</p>
+                        <p className="text-sm text-slate-400 mt-1">歡迎回來，這裡可以查看你的帳號資訊與管理聊天紀錄</p>
+                    </div>
                 </div>
-                <p className="text-2xl font-medium">{displayName}</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">姓名</p>
+                        <p className="text-xl font-semibold mt-2">{displayName}</p>
+                    </div>
+                    <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">員工編號</p>
+                        <p className="text-xl font-semibold mt-2">{personId || "未登入"}</p>
+                    </div>
+                    <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">角色</p>
+                        <p className="text-xl font-semibold mt-2">{role}</p>
+                    </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent p-6">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-lg font-semibold">刪除所有聊天內容</p>
+                            <p className="text-sm text-red-200/80 mt-1">此動作無法復原</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleClearHistory}
+                            disabled={!personId || isClearing}
+                            className="px-4 py-2 rounded-xl bg-red-500/80 hover:bg-red-500 text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
+                        >
+                            {isClearing ? "刪除中..." : "全部刪除"}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
