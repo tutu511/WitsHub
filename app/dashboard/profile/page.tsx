@@ -2,16 +2,21 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { User, getUser, getPersonRole } from "@/lib/user";
 import { deleteHistoryByPerson } from "@/lib/chatHistory";
 import { useHistory } from "@/app/dashboard/context/historyContext";
-import { getReplyPreference, saveReplyPreference } from "@/lib/preference";
+import { getReplyPreference, removeReplyPreference, saveReplyPreference } from "@/lib/preference";
 
 export default function ProfilePage() {
     const [userInfo, setUserInfo] = useState<User | null>(null);
     const [isClearing, setIsClearing] = useState(false);
     const [replyPreference, setReplyPreference] = useState("");
     const [isSavingPreference, setIsSavingPreference] = useState(false);
+    const [isPreferenceModalOpen, setIsPreferenceModalOpen] = useState(false);
+    const [preferenceDraft, setPreferenceDraft] = useState("");
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isClient, setIsClient] = useState(false);
     const { refreshHistory } = useHistory();
 
     useEffect(() => {
@@ -22,23 +27,47 @@ export default function ProfilePage() {
         }
     }, []);
 
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     const displayName = userInfo?.personName?.trim() || "訪客";
     const personId = userInfo?.username || "";
     const role = getPersonRole();
 
-    const handleCustomizeReplyPreference = () => {
+    const handleOpenPreferenceModal = () => {
         if (!personId) return;
-        const promptValue = window.prompt(
-            "希望 AI 用什麼風格與語氣回覆？",
-            replyPreference || "範例：溫暖親切、條列式回覆重點"
-        );
-        if (promptValue === null) return;
-        const trimmed = promptValue.trim();
+        setPreferenceDraft(replyPreference || "");
+        setIsPreferenceModalOpen(true);
+    };
 
+    const handleClosePreferenceModal = () => {
+        if (isSavingPreference) return;
+        setIsPreferenceModalOpen(false);
+    };
+
+    const handleSavePreference = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!personId) return;
+        const trimmed = preferenceDraft.trim();
         setIsSavingPreference(true);
         try {
             saveReplyPreference(personId, trimmed);
             setReplyPreference(trimmed);
+            setIsPreferenceModalOpen(false);
+        } finally {
+            setIsSavingPreference(false);
+        }
+    };
+
+    const handleDeletePreference = () => {
+        if (!personId) return;
+        setIsSavingPreference(true);
+        try {
+            removeReplyPreference(personId);
+            setReplyPreference("");
+            setPreferenceDraft("");
+            setIsPreferenceModalOpen(false);
         } finally {
             setIsSavingPreference(false);
         }
@@ -46,9 +75,12 @@ export default function ProfilePage() {
 
     const handleClearHistory = () => {
         if (!personId) return;
-        const confirmed = window.confirm("確定要刪除所有聊天記錄嗎？此動作無法復原。");
-        if (!confirmed) return;
+        setIsDeleteModalOpen(true);
+    };
 
+    const handleConfirmClearHistory = () => {
+        if (!personId) return;
+        setIsDeleteModalOpen(false);
         setIsClearing(true);
         try {
             deleteHistoryByPerson(personId);
@@ -56,6 +88,11 @@ export default function ProfilePage() {
         } finally {
             setIsClearing(false);
         }
+    };
+
+    const handleCloseDeleteModal = () => {
+        if (isClearing) return;
+        setIsDeleteModalOpen(false);
     };
 
     return (
@@ -100,12 +137,12 @@ export default function ProfilePage() {
                             <p className="text-sm text-slate-300 mt-1">
                                 {replyPreference
                                     ? `目前設定：${replyPreference}`
-                                    : "設定 AI 的回覆風格與語氣，讓對話更符合你的風格"}
+                                    : "設定 AI 的回覆風格與語氣，讓對話更符合你的需求"}
                             </p>
                         </div>
                         <button
                             type="button"
-                            onClick={handleCustomizeReplyPreference}
+                            onClick={handleOpenPreferenceModal}
                             disabled={!personId || isSavingPreference}
                             className="px-4 py-2 rounded-xl bg-slate-50/10 border border-white/15 hover:bg-slate-50/15 text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
                         >
@@ -131,6 +168,93 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
+
+            {isClient && isPreferenceModalOpen &&
+                createPortal(
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4">
+                        <form
+                            onSubmit={handleSavePreference}
+                            className="w-full max-w-lg rounded-2xl bg-slate-900/90 border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.45)] p-6 space-y-4"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-lg font-semibold text-white">自訂風格與語氣</p>
+                                    <p className="text-sm text-slate-300 mt-1">描述你希望 AI 呈現的語氣與風格</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleClosePreferenceModal}
+                                    className="text-slate-300 hover:text-white transition"
+                                    aria-label="Close"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                        <div className="space-y-3">
+                                <textarea
+                                    id="replyPreference"
+                                    value={preferenceDraft}
+                                    onChange={(e) => setPreferenceDraft(e.target.value)}
+                                    placeholder="例如：溫暖、專業、友善、犀利"
+                                    className="w-full min-h-[120px] rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-300/40"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <button
+                                    type="button"
+                                    onClick={handleDeletePreference}
+                                    disabled={!personId || isSavingPreference || (!replyPreference && !preferenceDraft)}
+                                    className="px-4 py-2 rounded-xl border border-red-400/40 text-red-200 hover:bg-red-500/10 transition disabled:opacity-60"
+                                >
+                                    {isSavingPreference ? "刪除中..." : "刪除偏好"}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSavingPreference}
+                                    className="px-5 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 hover:border-white/30 transition disabled:opacity-60"
+                                >
+                                    {isSavingPreference ? "儲存中..." : "儲存偏好"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>,
+                    document.body
+                )
+            }
+
+            {isClient && isDeleteModalOpen &&
+                createPortal(
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4">
+                        <div className="w-full max-w-md rounded-2xl bg-slate-900/90 border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.45)] p-6 space-y-5">
+                            <div className="space-y-2">
+                                <p className="text-lg font-semibold text-white">刪除所有聊天內容</p>
+                                <p className="text-sm text-slate-300">確定要刪除所有聊天記錄嗎？此動作無法復原。</p>
+                            </div>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseDeleteModal}
+                                    disabled={isClearing}
+                                    className="px-4 py-2 rounded-xl border border-white/15 text-slate-200 hover:bg-white/5 transition disabled:opacity-60"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmClearHistory}
+                                    disabled={isClearing}
+                                    className="px-5 py-2 rounded-xl bg-red-500/80 hover:bg-red-500 text-white font-semibold transition disabled:opacity-60"
+                                >
+                                    {isClearing ? "刪除中..." : "全部刪除"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            }
         </div>
     );
 }

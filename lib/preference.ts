@@ -42,3 +42,10 @@ export const saveReplyPreference = (personId: string, replyPreference: string) =
 
     writePreferenceList(list);
 };
+
+export const removeReplyPreference = (personId: string) => {
+    if (!personId) return;
+    const list = readPreferenceList();
+    const nextList = list.filter((item) => item.personId !== personId);
+    writePreferenceList(nextList);
+};
