@@ -9,6 +9,7 @@ const DEMO_ACCOUNTS : User[] = [
   { username: "TP2509034", password: "zaq12wsx", email:"CindyYang1@wits.com", personName: "王芸若"},
   { username: "abc", password: "123", email:"CindyYang2@wits.com", personName: "測試者1"},
   { username: "def", password: "456", email:"CindyYang3@wits.com", personName: "測試者2"},
+  { username: "TP2412020", password: "zaq12wsx", email:"KelseyLin@wits.com", personName: "林采薇"}
 ];
 
 export default function LoginPage() {
