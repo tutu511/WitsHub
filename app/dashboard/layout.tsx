@@ -313,7 +313,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                             const isMenuOpen = openMenuId === history.id;
                                             const isEditing = editingId === history.id;
                                             const isTitleLoading = titleLoadingIds.includes(history.id);
-                                            const itemClasses = `block px-4 py-3 pr-12 rounded-2xl text-xs transition ${
+                                            const itemClasses = `block px-4 py-3 pr-12 min-h-10 rounded-2xl text-xs transition flex items-center ${
                                                 active
                                                     ? "bg-white/15 text-white"
                                                     : "bg-transparent text-slate-300 hover:text-white hover:bg-white/10"
