@@ -66,6 +66,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const [editingId, setEditingId] = useState<string | null>(null);
     // rename 中的暫存標題
     const [editingTitle, setEditingTitle] = useState("");
+    // rename 輸入法組字狀態
+    const [isRenameComposing, setIsRenameComposing] = useState(false);
     // rename input 的參考，用來自動 focus
     const renameInputRef = useRef<HTMLInputElement | null>(null);
     // 防止重複提交 rename
@@ -302,19 +304,25 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                             return (
                                                 <div key={history.id} className="relative group">
                                                     {isEditing ? (
-                                                        <div className={itemClasses}>
-                                                            <input
-                                                                ref={isEditing ? renameInputRef : null}
-                                                                value={editingTitle}
-                                                                onChange={event => setEditingTitle(event.target.value)}
-                                                                onBlur={commitRename}
-                                                                onKeyDown={event => {
-                                                                    if (event.key === "Enter") {
-                                                                        event.preventDefault();
-                                                                        commitRename();
-                                                                    }
-                                                                    if (event.key === "Escape") {
-                                                                        event.preventDefault();
+                                                                <div className={itemClasses}>
+                                                                    <input
+                                                                        ref={isEditing ? renameInputRef : null}
+                                                                        value={editingTitle}
+                                                                        onChange={event => setEditingTitle(event.target.value)}
+                                                                        onCompositionStart={() => setIsRenameComposing(true)}
+                                                                        onCompositionEnd={() => setIsRenameComposing(false)}
+                                                                        onBlur={commitRename}
+                                                                        onKeyDown={event => {
+                                                                            const composing =
+                                                                                isRenameComposing ||
+                                                                                event.nativeEvent.isComposing ||
+                                                                                event.keyCode === 229;
+                                                                            if (event.key === "Enter" && !composing) {
+                                                                                event.preventDefault();
+                                                                                commitRename();
+                                                                            }
+                                                                            if (event.key === "Escape") {
+                                                                                event.preventDefault();
                                                                         cancelRenaming();
                                                                     }
                                                                 }}
