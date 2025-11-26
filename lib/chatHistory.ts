@@ -42,9 +42,9 @@ export const saveHistory = (messages: Message[], chatId?: string): string => {
         const idx = prev.findIndex(h => h.id === chatId);
         if (idx >= 0) {
             // 將該筆歷史的 messages 更新為傳入的 messages
-            prev[idx].messages = messages;
-            // 同步更新該筆的 title：取 messages 第一筆的 content（若不存在則用 "新對話"）
-            prev[idx].title = messages[0]?.content || "新對話";
+            // 保留既有的標題（避免後續訊息更新時覆蓋掉先前生成的標題）
+            const nextTitle = prev[idx].title || messages[0]?.content || "新對話";
+            prev[idx] = { ...prev[idx], messages, title: nextTitle };
             // 把修改後的 prev（整個陣列）序列化回 localStorage，覆寫原來的資料
             localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(prev));
             // 回傳同一個 chatId（表示更新完畢）

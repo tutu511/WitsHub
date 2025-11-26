@@ -29,7 +29,30 @@ export default function NewChatPage() {
     // 取得 router 實例，用於導頁（導航）
     const router = useRouter();
     // 從 history context 取得 addHistory 函式，用來新增歷史對話
-    const { addHistory } = useHistory();
+    const { addHistory, renameHistory, clearTitleLoading } = useHistory();
+
+    const fetchChatTitle = async (question: string) => {
+        try {
+            const response = await fetch("https://uat-n8n.wits.com/webhook/generate-chat-title", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ question }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            const output = typeof data?.output === "string" ? data.output.trim() : "";
+            return { title: output || question, success: true };
+        } catch (error) {
+            console.error("generate-chat-title error:", error);
+            return { title: question, success: false };
+        }
+    };
 
     // 當使用者按下發送時執行的處理函式
     const handleSend = () => {
@@ -48,8 +71,20 @@ export default function NewChatPage() {
             { role: "robot", content: "" },
         ];
 
+        // 先呼叫生成標題 API，完成後再更新到歷史紀錄（失敗時使用原問題當標題）
+        const titlePromise = fetchChatTitle(trimmed);
+
         // 新增一筆歷史紀錄，並取得 chatId
-        const chatId = addHistory(messages);
+        const chatId = addHistory(messages, { isTitlePending: true });
+
+        titlePromise
+            .then(({ title, success }) => {
+                if (success) {
+                    renameHistory(chatId, title);
+                }
+            })
+            .catch((err) => console.error("rename title error:", err))
+            .finally(() => clearTitleLoading(chatId));
 
         // 拿著剛剛新增的歷史紀錄，跳轉到對應的歷史對話頁面
         router.push(`/dashboard/history/${chatId}`);
