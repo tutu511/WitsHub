@@ -106,3 +106,26 @@ export const deleteHistory = (chatId: string) => {
     const filtered = list.filter(item => item.id !== chatId);
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(filtered));
 };
+
+// 更新某一筆歷史的標題
+export const renameHistoryTitle = (chatId: string, newTitle: string) => {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return;
+    const list: ChatHistory[] = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || "[]");
+    const idx = list.findIndex(item => item.id === chatId);
+    if (idx === -1) return;
+
+    const safeTitle = newTitle.trim() || "新對話";
+    list[idx] = { ...list[idx], title: safeTitle };
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(list));
+};
+
+// 刪除當前用戶全部紀錄
+export const deleteHistoryByPerson = (personId?: string) => {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return;
+    const currentPersonId = personId || getPersonId();
+    if (!currentPersonId) return;
+
+    const list: ChatHistory[] = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || "[]");
+    const filtered = list.filter(item => item.personId !== currentPersonId);
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(filtered));
+};

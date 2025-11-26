@@ -17,3 +17,5 @@ export const firebaseConfig = {
 export const USER_STORAGE_KEY = "witsHubUser";
 // 歷史紀錄
 export const HISTORY_STORAGE_KEY = "chatHistory";
+// 偏好清單
+export const PREFERENCE_STORAGE_KEY = "preferenceList";
