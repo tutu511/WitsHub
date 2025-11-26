@@ -12,7 +12,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
  *   getHistoryList（從 localStorage 取得全部歷史）
  *   saveHistory（將歷史寫回 localStorage，更新 or 新增）
  */
-import { ChatHistory, getHistoryList, saveHistory, deleteHistory } from "@/lib/chatHistory";
+import { ChatHistory, getHistoryList, saveHistory, deleteHistory, renameHistoryTitle } from "@/lib/chatHistory";
 // 引入類型（或介面）Message，用來定義訊息資料結構
 import { Message } from "@/lib/chatHistory";
 
@@ -26,6 +26,7 @@ type HistoryContextType = {
     refreshHistory: () => void;
     addHistory: (messages: Message[]) => string;
     removeHistory: (historyId: string) => void;
+    renameHistory: (historyId: string, title: string) => void;
 };
 
 // 建立 Context，預設值為 undefined（若使用者忘記用 Provider 包起來會報錯）
@@ -63,9 +64,14 @@ export const HistoryProvider = ({ children }: { children: ReactNode }) => {
         refreshHistory();
     };
 
+    const renameHistory = (historyId: string, title: string) => {
+        renameHistoryTitle(historyId, title);
+        refreshHistory();
+    };
+
     return (
         // 用 Provider 包住 children 讓子元件能取得 context 值
-        <HistoryContext.Provider value={{ historyList, refreshHistory, addHistory, removeHistory }}>
+        <HistoryContext.Provider value={{ historyList, refreshHistory, addHistory, removeHistory, renameHistory }}>
             {children}
         </HistoryContext.Provider>
     );

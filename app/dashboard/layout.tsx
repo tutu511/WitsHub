@@ -36,7 +36,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [historyExpanded, setHistoryExpanded] = useState(true);
     // 刪除歷史紀錄
-    const { historyList, removeHistory } = useHistory();
+    const { historyList, removeHistory, renameHistory } = useHistory();
     // 讓路徑比較更可靠：移除結尾斜線
     const normalizePath = (p: string) => p.replace(/\/$/, "");
 
@@ -62,6 +62,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const [isOpenShare, setOpenShare] = useState(false);
     // 選擇的聊天 ID
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+    // 進行 inline rename 的 chat id
+    const [editingId, setEditingId] = useState<string | null>(null);
+    // rename 中的暫存標題
+    const [editingTitle, setEditingTitle] = useState("");
+    // rename input 的參考，用來自動 focus
+    const renameInputRef = useRef<HTMLInputElement | null>(null);
+    // 防止重複提交 rename
+    const renameSubmittingRef = useRef(false);
     /**
      * useEffect 只會在 client 端執行一次（組件掛載後）
      * 這裡將 mounted 設為 true，表示 client 已經準備好
@@ -85,6 +93,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         // 清除監聽
         return () => window.removeEventListener("storage", handleStorage);
     }, []);
+
+    useEffect(() => {
+        if (!editingId) return;
+        const timer = setTimeout(() => {
+            renameInputRef.current?.focus();
+            renameInputRef.current?.select();
+        }, 0);
+
+        return () => clearTimeout(timer);
+    }, [editingId]);
 
     // 針對歷史紀錄的列表，點擊更多（...）的選單
     const closeMenu = useCallback(() => {
@@ -167,6 +185,29 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         });
         // 開啟對應 id 的 menu
         setOpenMenuId(historyId);
+    };
+
+    const startRenaming = (historyId: string, title: string) => {
+        closeMenu();
+        setEditingId(historyId);
+        setEditingTitle(title);
+    };
+
+    const cancelRenaming = () => {
+        setEditingId(null);
+        setEditingTitle("");
+    };
+
+    const commitRename = () => {
+        if (!editingId || renameSubmittingRef.current) return;
+        renameSubmittingRef.current = true;
+        const nextTitle = editingTitle.trim() || "新對話";
+        renameHistory(editingId, nextTitle);
+        setEditingId(null);
+        setEditingTitle("");
+        setTimeout(() => {
+            renameSubmittingRef.current = false;
+        }, 0);
     };
 
     const renderNavLink = (item: (typeof navItems)[number]) => {
@@ -252,19 +293,41 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                             const active = normalizePath(pathname) === normalizePath(href);
                                             // 判斷此筆是否打開 menu
                                             const isMenuOpen = openMenuId === history.id;
+                                            const isEditing = editingId === history.id;
+                                            const itemClasses = `block px-4 py-3 pr-12 rounded-2xl text-xs transition ${
+                                                active
+                                                    ? "bg-white/15 text-white"
+                                                    : "bg-transparent text-slate-300 hover:text-white hover:bg-white/10"
+                                            } ${isEditing ? "ring-1 ring-white/40 bg-white/20 text-white" : ""}`;
                                             return (
                                                 <div key={history.id} className="relative group">
-                                                    <Link
-                                                        href={href}
-                                                        className={`block px-4 py-3 pr-12 rounded-2xl text-xs transition ${
-                                                            active
-                                                                ? "bg-white/15 text-white"
-                                                                : "bg-transparent text-slate-300 hover:text-white hover:bg-white/10"
-                                                        }`}
-                                                    >
-                                                        {/* 顯示標題，超過截斷 */}
-                                                        {history.title.length > 12 ? `${history.title.slice(0, 12)}…` : history.title}
-                                                    </Link>
+                                                    {isEditing ? (
+                                                        <div className={itemClasses}>
+                                                            <input
+                                                                ref={isEditing ? renameInputRef : null}
+                                                                value={editingTitle}
+                                                                onChange={event => setEditingTitle(event.target.value)}
+                                                                onBlur={commitRename}
+                                                                onKeyDown={event => {
+                                                                    if (event.key === "Enter") {
+                                                                        event.preventDefault();
+                                                                        commitRename();
+                                                                    }
+                                                                    if (event.key === "Escape") {
+                                                                        event.preventDefault();
+                                                                        cancelRenaming();
+                                                                    }
+                                                                }}
+                                                                className="w-full bg-transparent border-none outline-none text-white placeholder:text-white/60 text-xs"
+                                                                aria-label="重新命名對話"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <Link href={href} className={itemClasses}>
+                                                            {/* 顯示標題，超過截斷 */}
+                                                            {history.title.length > 12 ? `${history.title.slice(0, 12)}…` : history.title}
+                                                        </Link>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         aria-label="更多選項"
@@ -274,7 +337,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                             active || isMenuOpen
                                                                 ? "opacity-100 pointer-events-auto bg-white/15"
                                                                 : "opacity-0 pointer-events-none bg-black/30 group-hover:opacity-100 group-hover:pointer-events-auto"
-                                                        }`}
+                                                        } ${isEditing ? "opacity-100 pointer-events-none bg-white/20" : ""}`}
+                                                        disabled={isEditing}
                                                     >
                                                         {/* 三個點 icon */}
                                                         <MoreHorizontal size={16} />
@@ -283,9 +347,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                     {isMenuOpen && mounted && menuPosition &&
                                                         createPortal(
                                                             <div
-                                                                className="fixed z-50 w-20 rounded-lg border border-white/60 bg-white/85 text-slate-900 backdrop-blur-lg p-2 shadow-2xl transform -translate-x-full"
+                                                                className="fixed z-50 w-26 rounded-lg border border-white/60 bg-white/85 text-slate-900 backdrop-blur-lg p-2 shadow-2xl transform -translate-x-full"
                                                                 style={{ top: menuPosition.top, left: menuPosition.left }}
                                                             >
+                                                                <button
+                                                                    type="button"
+                                                                className="w-full text-center px-3 py-1.5 rounded-lg text-xs text-slate-700 hover:bg-slate-200"
+                                                                    onClick={event => {
+                                                                        event.preventDefault();
+                                                                        event.stopPropagation();
+                                                                        startRenaming(history.id, history.title);
+                                                                    }}
+                                                                >
+                                                                    重新命名
+                                                                </button>
                                                                 <button
                                                                     type="button"
                                                                 className="w-full text-center px-3 py-1.5 rounded-lg text-xs text-slate-700 hover:bg-slate-200"
@@ -313,6 +388,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                                         // 避免冒泡導致 menu 被關閉
                                                                         event.stopPropagation();
                                                                         // 呼叫 removeHistory 刪除該歷史紀錄
+                                                                        if (editingId === history.id) {
+                                                                            cancelRenaming();
+                                                                        }
                                                                         removeHistory(history.id);
                                                                         // 目前路徑
                                                                         const currentPath = normalizePath(pathname);
