@@ -298,7 +298,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                 active
                                                     ? "bg-white/15 text-white"
                                                     : "bg-transparent text-slate-300 hover:text-white hover:bg-white/10"
-                                            } ${isEditing ? "ring-1 ring-white/40 bg-white/20 text-white" : ""}`;
+                                            } ${isEditing ? "ring-1 ring-inset ring-white/40 bg-white/20 text-white" : ""}`;
                                             return (
                                                 <div key={history.id} className="relative group">
                                                     {isEditing ? (
