@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, saveUser } from "@/lib/user";
+import { LanguageSwitcher } from "@/components/languageSwitcher";
 
 // Demo 帳號密碼配置
 const DEMO_ACCOUNTS : User[] = [
@@ -53,7 +54,10 @@ export default function LoginPage() {
 
       {/* 中央登入框 */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(255,255,255,0.06)] p-10 space-y-8 ring-1 ring-white/10">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageSwitcher />
+        </div>
+        <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(255,255,255,0.06)] p-10 space-y-8 ring-1 ring-white/10">
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-light text-white tracking-wide">
               WitsHub

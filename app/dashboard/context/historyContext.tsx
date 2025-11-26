@@ -24,9 +24,12 @@ import { Message } from "@/lib/chatHistory";
 type HistoryContextType = {
     historyList: ChatHistory[];
     refreshHistory: () => void;
-    addHistory: (messages: Message[]) => string;
+    addHistory: (messages: Message[], options?: { isTitlePending?: boolean }) => string;
     removeHistory: (historyId: string) => void;
     renameHistory: (historyId: string, title: string) => void;
+    titleLoadingIds: string[];
+    markTitleLoading: (historyId: string) => void;
+    clearTitleLoading: (historyId: string) => void;
 };
 
 // 建立 Context，預設值為 undefined（若使用者忘記用 Provider 包起來會報錯）
@@ -39,6 +42,16 @@ const HistoryContext = createContext<HistoryContextType | undefined>(undefined);
 export const HistoryProvider = ({ children }: { children: ReactNode }) => {
     // 宣告一個狀態 historyList，用來儲存所有歷史，初始值為 getHistoryList() 從 localStorage 取出的內容
     const [historyList, setHistoryList] = useState<ChatHistory[]>(getHistoryList());
+    // 哪些對話正在生成標題
+    const [titleLoadingIds, setTitleLoadingIds] = useState<string[]>([]);
+
+    const markTitleLoading = (historyId: string) => {
+        setTitleLoadingIds(prev => (prev.includes(historyId) ? prev : [...prev, historyId]));
+    };
+
+    const clearTitleLoading = (historyId: string) => {
+        setTitleLoadingIds(prev => prev.filter(id => id !== historyId));
+    };
 
     // 再次讀取 localStorage，並同步到 state，讓 UI 重新渲染
     const refreshHistory = () => {
@@ -50,28 +63,44 @@ export const HistoryProvider = ({ children }: { children: ReactNode }) => {
      *
      * 新對話 - 點擊發送 - 要新增一筆紀錄到 localStorage - 刷新歷史紀錄的列表 - 根據 chatId 跳轉到對應的對話頁面
      */
-    const addHistory = (messages: Message[]) => {
+    const addHistory = (messages: Message[], options?: { isTitlePending?: boolean }) => {
         // saveHistory 會回傳新建立的 chatId，並存 localStorage
         const chatId = saveHistory(messages);
         // 新增完後重新同步 historyList 到 UI
         refreshHistory();
+        if (options?.isTitlePending) {
+            markTitleLoading(chatId);
+        }
         return chatId;
     };
 
 
     const removeHistory = (historyId: string) => {
         deleteHistory(historyId);
+        clearTitleLoading(historyId);
         refreshHistory();
     };
 
     const renameHistory = (historyId: string, title: string) => {
         renameHistoryTitle(historyId, title);
+        clearTitleLoading(historyId);
         refreshHistory();
     };
 
     return (
         // 用 Provider 包住 children 讓子元件能取得 context 值
-        <HistoryContext.Provider value={{ historyList, refreshHistory, addHistory, removeHistory, renameHistory }}>
+        <HistoryContext.Provider
+            value={{
+                historyList,
+                refreshHistory,
+                addHistory,
+                removeHistory,
+                renameHistory,
+                titleLoadingIds,
+                markTitleLoading,
+                clearTitleLoading
+            }}
+        >
             {children}
         </HistoryContext.Provider>
     );

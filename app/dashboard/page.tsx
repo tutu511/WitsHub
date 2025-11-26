@@ -11,6 +11,7 @@ import { SendHorizontal, Sparkles, Ban } from "lucide-react";
 import { useHistory } from "./context/historyContext";
 // 引入類型（或介面）Message，用來定義訊息資料結構
 import { Message } from "@/lib/chatHistory";
+import { fetchChatTitle } from "@/lib/api";
 // 多語系
 import { useI18n } from "@/components/i18n-provider";
 // 語音轉文字
@@ -29,7 +30,7 @@ export default function NewChatPage() {
     // 取得 router 實例，用於導頁（導航）
     const router = useRouter();
     // 從 history context 取得 addHistory 函式，用來新增歷史對話
-    const { addHistory } = useHistory();
+    const { addHistory, renameHistory, clearTitleLoading } = useHistory();
 
     // 當使用者按下發送時執行的處理函式
     const handleSend = () => {
@@ -48,8 +49,20 @@ export default function NewChatPage() {
             { role: "robot", content: "" },
         ];
 
+        // 先呼叫生成標題 API，完成後再更新到歷史紀錄（失敗時使用原問題當標題）
+        const titlePromise = fetchChatTitle(trimmed);
+
         // 新增一筆歷史紀錄，並取得 chatId
-        const chatId = addHistory(messages);
+        const chatId = addHistory(messages, { isTitlePending: true });
+
+        titlePromise
+            .then(({ title, success }) => {
+                if (success) {
+                    renameHistory(chatId, title);
+                }
+            })
+            .catch((err) => console.error("rename title error:", err))
+            .finally(() => clearTitleLoading(chatId));
 
         // 拿著剛剛新增的歷史紀錄，跳轉到對應的歷史對話頁面
         router.push(`/dashboard/history/${chatId}`);

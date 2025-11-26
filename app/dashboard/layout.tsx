@@ -20,6 +20,22 @@ import { LogoutButton } from "@/components/logoutButton";
 import { ShareChatDialog } from "@/components/shareChatDialog";
 import {getPersonName} from "@/lib/user";
 
+// 粗略計算可視長度，CJK 算 2，其他算 1，讓英文可以顯示更多才截斷
+const truncateTitle = (title: string, maxUnits = 22) => {
+    let units = 0;
+    let result = "";
+    for (const ch of title) {
+        const isCJK = /[\u3400-\u9FFF\uF900-\uFAFF]/.test(ch);
+        const nextUnits = units + (isCJK ? 2 : 1);
+        if (nextUnits > maxUnits) {
+            return `${result}…`;
+        }
+        units = nextUnits;
+        result += ch;
+    }
+    return result;
+};
+
 const GlassPanel = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
     <div className={`backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(15,23,42,0.45)] ${className}`}>
         {children}
@@ -36,7 +52,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [historyExpanded, setHistoryExpanded] = useState(true);
     // 刪除歷史紀錄
-    const { historyList, removeHistory, renameHistory } = useHistory();
+    const { historyList, removeHistory, renameHistory, titleLoadingIds } = useHistory();
     // 讓路徑比較更可靠：移除結尾斜線
     const normalizePath = (p: string) => p.replace(/\/$/, "");
 
@@ -296,11 +312,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                             // 判斷此筆是否打開 menu
                                             const isMenuOpen = openMenuId === history.id;
                                             const isEditing = editingId === history.id;
-                                            const itemClasses = `block px-4 py-3 pr-12 rounded-2xl text-xs transition ${
+                                            const isTitleLoading = titleLoadingIds.includes(history.id);
+                                            const itemClasses = `block px-4 py-3 pr-12 min-h-10 rounded-2xl text-xs transition flex items-center ${
                                                 active
                                                     ? "bg-white/15 text-white"
                                                     : "bg-transparent text-slate-300 hover:text-white hover:bg-white/10"
                                             } ${isEditing ? "ring-1 ring-inset ring-white/40 bg-white/20 text-white" : ""}`;
+                                            const titleContent = isTitleLoading ? (
+                                                <span className="flex items-center gap-2">
+                                                    <span className="inline-block h-2.5 w-16 rounded-full bg-white/50 animate-pulse" />
+                                                    <span className="inline-block h-2.5 w-10 rounded-full bg-white/30 animate-pulse" />
+                                                </span>
+                                            ) : (
+                                                truncateTitle(history.title)
+                                            );
                                             return (
                                                 <div key={history.id} className="relative group">
                                                     {isEditing ? (
@@ -331,9 +356,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                             />
                                                         </div>
                                                     ) : (
-                                                        <Link href={href} className={itemClasses}>
+                                                        <Link href={href} className={itemClasses} aria-busy={isTitleLoading}>
                                                             {/* 顯示標題，超過截斷 */}
-                                                            {history.title.length > 12 ? `${history.title.slice(0, 12)}…` : history.title}
+                                                            {titleContent}
                                                         </Link>
                                                     )}
                                                     <button
