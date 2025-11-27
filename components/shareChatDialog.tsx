@@ -61,7 +61,7 @@ export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
     return (
         <>
             {/* QR Code Modal */}
-            <div className="fixed inset-0 bg-black/20 grid place-items-center z-50">
+            {shareUrl && <div className="fixed inset-0 bg-black/20 grid place-items-center z-50">
                 <div className="relative bg-white rounded-xl p-10 flex flex-col items-center space-y-4 w-[300px]">
                     <button
                         className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
@@ -71,6 +71,7 @@ export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
                     <QRCode value={shareUrl} size={200} />
                 </div>
             </div>
+            }
         </>
     );
 }
