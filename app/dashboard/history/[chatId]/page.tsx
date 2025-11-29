@@ -12,7 +12,7 @@ import { getChatById, saveHistory, Message } from "@/lib/chatHistory";
 import { useI18n } from "@/components/i18n-provider";
 import VoiceTransformText from "@/components/voiceTransformText";
 // api：機器人回覆
-import { apiService } from "@/lib/api";
+import {apiService, RobotResponse} from "@/lib/api";
 // api：向機器人提問
 import { ChatQuestionRequest } from "@/lib/api";
 import {getPersonId} from "@/lib/user";
@@ -105,7 +105,7 @@ export default function ChatPage() {
      * indexToUpdate: 要更新的訊息 index（通常是最後一筆 robot）
      * chatIdToSave: 要儲存的 chatId
      */
-    const typeWriter = (text: string, indexToUpdate: number, chatIdToSave: string) => {
+    const typeWriter = (text: string, img: string, indexToUpdate: number, chatIdToSave: string) => {
         // return Promise 在打字完成後可 await
         return new Promise<void>((resolve) => {
             // 先清除舊的 interval
@@ -128,10 +128,14 @@ export default function ChatPage() {
                     // 找到要更新的那筆 robot 訊息
                     const msg = newList[indexToUpdate];
                     // 將內容更新成前 i 個字，模擬一個一個字出現的效果
-                    newList[indexToUpdate] = { ...msg, content: text.slice(0, i) };
+                    newList[indexToUpdate] = { ...msg, content: text.slice(0, i), img: ""};
 
                     // 當字全部輸出完後，儲存最新的聊天記錄
                     if (i === text.length) {
+                        // 如果有圖片的話，要等文字都輸出後，再顯示在底部
+                        if (img != "") {
+                            newList[indexToUpdate] = { ...msg, content: text, img};
+                        }
                         // 存入 localStorage
                         saveHistory(newList, chatIdToSave);
                     }
@@ -189,7 +193,8 @@ export default function ChatPage() {
                 if (msg.content === "") {
                     newList[newList.length - 1] = {
                         ...msg,
-                        content: "用戶已終止生成，請重新再次提出問題！！"
+                        content: "用戶已終止生成，請重新再次提出問題！！",
+                        img: ""
                     };
                 }
 
@@ -228,7 +233,7 @@ export default function ChatPage() {
         setIsTyping(true);
 
         // 開始打字機效果
-        await typeWriter(botReply, botIndex, chatId);
+        await typeWriter(botReply.output, botReply.img || "", botIndex, chatId);
         // 打字結束
         setIsTyping(false);
     }
@@ -248,8 +253,8 @@ export default function ChatPage() {
             // 新增 user 訊息
             const newList: Message[] = [
                 ...prev,
-                { role: "user", content: userInput },
-                { role: "robot", content: "" }
+                { role: "user", content: userInput, img: "" },
+                { role: "robot", content: "", img: "" }
             ];
             // 計算機器人訊息的 index，append 在最後一筆，因此 index 是 newList.length - 1
             const botIndex = newList.length - 1;
@@ -269,7 +274,7 @@ export default function ChatPage() {
     };
 
     // api：機器人回覆
-    async function handleRobotResponse(userInput: string, chatId: string){
+    async function handleRobotResponse(userInput: string, chatId: string): Promise<RobotResponse>{
         /**
          * chatinput：使用者的問題
          * empId：從 localStorage 取得員工編號
@@ -284,9 +289,9 @@ export default function ChatPage() {
         };
         const robotResponse = await apiService.fetchRobotResponse(request);
         if (robotResponse.output) {
-            return robotResponse.output
+            return robotResponse
         } else {
-            return "回覆出現異常，請重新生成！"
+            return { output: "回覆出現異常，請重新生成！", img: ""}
         }
     }
 
@@ -336,7 +341,19 @@ export default function ChatPage() {
                                                 <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-400"></span>
                                             </span>
                                         ) : (
-                                            m.content
+                                            <>
+                                                {/* 先顯示文字 */}
+                                                <div>{m.content}</div>
+
+                                                {/* 若有圖片，顯示在下面 */}
+                                                {m.img && (
+                                                    <img
+                                                        src={`/robot-images/${m.img}`}
+                                                        alt="robot response"
+                                                        className="mt-3 max-w-full"
+                                                    />
+                                                )}
+                                            </>
                                         )}
                                     </>
                                 )}

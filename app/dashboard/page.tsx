@@ -45,8 +45,8 @@ export default function NewChatPage() {
          *  robot（系統/機器人）的訊息：機器人回覆的信息
          */
         const messages: Message[] = [
-            { role: "user", content: trimmed },
-            { role: "robot", content: "" },
+            { role: "user", content: trimmed, img: "" },
+            { role: "robot", content: "", img: "" },
         ];
 
         // 先呼叫生成標題 API，完成後再更新到歷史紀錄（失敗時使用原問題當標題）
