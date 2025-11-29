@@ -8,9 +8,15 @@ export interface ChatQuestionRequest {
     prompt: string;
 }
 
-// 機器人回答 api：Response
+/**
+ * 機器人回答 api：Response
+ * output：文本
+ * img：若有圖片則會出現此欄位
+ */
+
 export interface RobotResponse {
     output: string;
+    img?: string;
 }
 
 class ApiService {

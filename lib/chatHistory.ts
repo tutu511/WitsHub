@@ -10,6 +10,7 @@ import {getPersonId} from "@/lib/user";
 export type Message = {
     role: "user" | "robot";
     content: string;
+    img: string;
 };
 
 /**
