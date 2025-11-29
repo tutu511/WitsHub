@@ -33,7 +33,7 @@ export default function ProfilePage() {
 
     const displayName = userInfo?.personName?.trim() || "訪客";
     const personId = userInfo?.username || "";
-    const role = getPersonRole();
+    const role = userInfo?.role || "未設定";
 
     const handleOpenPreferenceModal = () => {
         if (!personId) return;

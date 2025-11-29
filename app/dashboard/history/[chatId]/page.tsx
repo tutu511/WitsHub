@@ -15,7 +15,10 @@ import VoiceTransformText from "@/components/voiceTransformText";
 import {apiService, RobotResponse} from "@/lib/api";
 // api：向機器人提問
 import { ChatQuestionRequest } from "@/lib/api";
+// 獲取用戶 id（員工編號）
 import {getPersonId} from "@/lib/user";
+// 獲取風格
+import { getReplyPreference } from "@/lib/preference";
 
 // 定義 ChatPage 元件
 export default function ChatPage() {
@@ -240,9 +243,11 @@ export default function ChatPage() {
         botIndex: number,
         chatId: string
     ) {
+        // 如果機器人已經在思考中了，就不允許重複呼叫 api
+        if (isThinkingRef.current) return;
+
         // robot 開始思考，代表要打 api
         setThinking(true);
-
         // 呼叫 API
         const botReply = await handleRobotResponse(userInput, chatId);
 
@@ -294,6 +299,9 @@ export default function ChatPage() {
 
     // api：機器人回覆
     async function handleRobotResponse(userInput: string, chatId: string): Promise<RobotResponse>{
+        // 獲取當前登錄的用戶(從 localStorage 取得員工編號)
+        const personId = getPersonId();
+
         /**
          * chatinput：使用者的問題
          * empId：從 localStorage 取得員工編號
@@ -302,9 +310,9 @@ export default function ChatPage() {
          */
         const request: ChatQuestionRequest = {
             chatinput: userInput,
-            empId: getPersonId(),
+            empId: personId,
             chatId: chatId,
-            prompt: "",
+            prompt: getReplyPreference(personId),
         };
         const robotResponse = await apiService.fetchRobotResponse(request);
         if (robotResponse.output) {

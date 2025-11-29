@@ -52,11 +52,12 @@ export const saveHistory = (messages: Message[], chatId?: string): string => {
             return chatId;
         }
     }
-
-    // 新對話：如果沒有 chatId（或找不到該 chatId），執行「新增」流程
-    const newId = Date.now().toString();
     // 獲取當前登錄的用戶(從 localStorage 取得員工編號)
     const personId = getPersonId();
+    // 獲取當前時間
+    const timestamp = Date.now();
+    // 新對話：如果沒有 chatId（或找不到該 chatId），執行「新增」流程
+    const newId = `${personId}-${timestamp}`;
     /**
      *  用 timestamp 當作新的 id（簡單且通常足夠唯一），轉為字串
      *  建立一筆新的 ChatHistory 物件，title 同樣取第一條訊息內容或預設文字
