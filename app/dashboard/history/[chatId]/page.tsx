@@ -91,13 +91,70 @@ export default function ChatPage() {
             if (userMsg) {
                 // 計算機器人訊息的 index，append 在最後一筆，因此 index 是 newList.length - 1
                 const botIndex = chat.messages.length - 1;
-                // robot 開始思考，代表要打 api
-                setThinking(true);
                 // 開始機器人回覆的流程
                 handleBotFlow(userMsg.content, botIndex, chatId);
             }
         }
     }, [chatId]);
+
+    /**
+     * 更新對話訊息內容【已開始思考後的情境，需要對已有的對話資訊進行操作】
+     * 1. 機器人回覆模擬打字效果，打字結束後在顯示圖片，最後儲存最新的聊天記錄
+     *    indexToUpdate: 需要更新的那筆 robot 資訊
+     *    text：機器人回覆的全內容
+     *    sliceIndex：需要截止到的位置（模擬打字效果）
+     *    img：機器人回覆的圖片
+     *    chatIdToSave：需要保存的 chatId
+     *    isNeedType：是否需要打字輸出的效果
+     *
+     * 2. 用戶中途停止：
+     *    若停止(不管是思考中 or 打字中)時，最後一筆 robot 訊息是空的
+     *       → 補上提示訊息： 用戶已終止生成，請重新再次提出問題！！
+     *    若停止（打字中）時，最後一筆 robot 訊息是有一半內容的
+     *       → 目前打到一半的內容進行保存
+     */
+    function updateMessages(indexToUpdate: number, text: string, sliceIndex: number, img: string, chatIdToSave: string, isNeedType: boolean) {
+        // 更新畫面上的 messages
+        setMessages(prev => {
+            // 複製 messages 陣列（避免直接修改）
+            const newList = [...prev];
+            // 找到要更新的那筆 robot 訊息
+            const msg = newList[indexToUpdate];
+            // 是否需要打字的效果
+            if (isNeedType) {
+                // 將內容更新成前 i 個字，模擬一個一個字出現的效果
+                newList[indexToUpdate] = { ...msg, content: text.slice(0, sliceIndex), img: ""};
+
+                // 當字全部輸出完後，儲存最新的聊天記錄
+                if (sliceIndex === text.length) {
+                    // 如果有圖片的話，要等文字都輸出後，再顯示在底部
+                    if (img != "") {
+                        newList[indexToUpdate] = { ...msg, content: text, img};
+                    }
+                    // 存入 localStorage
+                    saveHistory(newList, chatIdToSave);
+                }
+            } else {
+                // 用戶中途停止，要更新 robot 的回覆
+                if (msg && msg.role === "robot") {
+                    // 最後一筆 robot 訊息是空的,補上提示訊息
+                    if (msg.content === "") {
+                        newList[newList.length - 1] = {
+                            ...msg,
+                            content: text,
+                            img: ""
+                        };
+                    }
+                    // 存入 localStorage
+                    saveHistory(newList, chatIdToSave);
+                }
+            }
+
+            // 回傳新 messages
+            return newList;
+        });
+
+    }
 
     /**
      * 打字機效果，模擬 robot 一個字一個字輸出
@@ -121,28 +178,8 @@ export default function ChatPage() {
                 // 文字位置：每次增加 1
                 i++;
 
-                // 更新畫面上的 messages
-                setMessages(prev => {
-                    // 複製 messages 陣列（避免直接修改）
-                    const newList = [...prev];
-                    // 找到要更新的那筆 robot 訊息
-                    const msg = newList[indexToUpdate];
-                    // 將內容更新成前 i 個字，模擬一個一個字出現的效果
-                    newList[indexToUpdate] = { ...msg, content: text.slice(0, i), img: ""};
-
-                    // 當字全部輸出完後，儲存最新的聊天記錄
-                    if (i === text.length) {
-                        // 如果有圖片的話，要等文字都輸出後，再顯示在底部
-                        if (img != "") {
-                            newList[indexToUpdate] = { ...msg, content: text, img};
-                        }
-                        // 存入 localStorage
-                        saveHistory(newList, chatIdToSave);
-                    }
-
-                    // 回傳新 messages
-                    return newList;
-                });
+                // 更新畫面上的 messages，需要機器人打字的效果
+                updateMessages(indexToUpdate, text, i, img, chatIdToSave, true)
 
                 // 若已輸出全部文字
                 if (i >= text.length) {
@@ -183,37 +220,18 @@ export default function ChatPage() {
          * 若停止（打字中）時，最後一筆 robot 訊息是有一半內容的
          *   → 目前打到一半的內容進行保存
          */
-        setMessages(prev => {
-            // 複製 messages 陣列（避免直接修改）
-            const newList = [...prev];
-            // 找到要更新的那筆 robot 訊息
-            const msg = newList[newList.length - 1];
-            if (msg && msg.role === "robot") {
-                // 最後一筆 robot 訊息是空的,補上提示訊息
-                if (msg.content === "") {
-                    newList[newList.length - 1] = {
-                        ...msg,
-                        content: "用戶已終止生成，請重新再次提出問題！！",
-                        img: ""
-                    };
-                }
-
-                // 若沒有 chatId，直接跳出
-                if (!chatId || Array.isArray(chatId)) {
-                    return newList;
-                } else {
-                    saveHistory(newList, chatId);
-                }
-            }
-            return newList;
-        });
+        // 若沒有 chatId，直接跳出
+        if (!chatId || Array.isArray(chatId)) return
+        // 計算機器人訊息的 index，終止的是最後一筆
+        const botIndex = messages.length -1 ;
+        updateMessages(botIndex, "用戶已終止生成，請重新再次提出問題！！", 0, "", chatId, false)
 
     };
 
     /**
-     * 封裝機器人回覆流程：
+     * 封裝機器人回覆流程：【剛進入歷史紀錄對話框 & 用戶點擊送出】
      * 1. 呼叫 API
-     * 2. 若是點擊暫停而已停止思考，那就直接中止
+     * 2. 若是點擊暫停而已停止思考，那就直接終止
      * 3. 若是正常得到機器人回覆，那就停止思考
      * 4. 開始打字效果
      */
@@ -222,9 +240,13 @@ export default function ChatPage() {
         botIndex: number,
         chatId: string
     ) {
+        // robot 開始思考，代表要打 api
+        setThinking(true);
+
+        // 呼叫 API
         const botReply = await handleRobotResponse(userInput, chatId);
 
-        // 若使用者中途按了停止，就不執行後面的打字
+        // 終止：若使用者中途按了停止，就不執行後面的打字
         if (!isThinkingRef.current) return;
 
         // 停止思考
@@ -261,9 +283,6 @@ export default function ChatPage() {
 
             // 儲存聊天紀錄
             saveHistory(newList, chatId);
-
-            // robot 開始思考，代表要打 api
-            setThinking(true);
 
             // 開始機器人回覆的流程
             handleBotFlow(userInput, botIndex, chatId)
