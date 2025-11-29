@@ -11,7 +11,7 @@ import { SendHorizontal, Sparkles, Ban } from "lucide-react";
 import { useHistory } from "./context/historyContext";
 // 引入類型（或介面）Message，用來定義訊息資料結構
 import { Message } from "@/lib/chatHistory";
-import { fetchChatTitle } from "@/lib/api";
+import { apiService } from "@/lib/api";
 // 多語系
 import { useI18n } from "@/components/i18n-provider";
 // 語音轉文字
@@ -50,7 +50,7 @@ export default function NewChatPage() {
         ];
 
         // 先呼叫生成標題 API，完成後再更新到歷史紀錄（失敗時使用原問題當標題）
-        const titlePromise = fetchChatTitle(trimmed);
+        const titlePromise = apiService.fetchChatTitle(trimmed);
 
         // 新增一筆歷史紀錄，並取得 chatId
         const chatId = addHistory(messages, { isTitlePending: true });

@@ -6,7 +6,7 @@ import SpeechRecognition, {
     useSpeechRecognition
 } from "react-speech-recognition";
 // icons
-import { Mic, X, Check } from "lucide-react";
+import {Mic, X, Check} from "lucide-react";
 
 interface VoiceTransformTextProps {
     // 父層接收語音結果

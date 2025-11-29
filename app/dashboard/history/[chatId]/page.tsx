@@ -8,11 +8,14 @@ import { useParams } from "next/navigation";
 import {SendHorizontal, Pause, Ban} from "lucide-react";
 // 匯入 chatHistory 方法與型別
 import { getChatById, saveHistory, Message } from "@/lib/chatHistory";
-// 匯入自訂的歷史紀錄 context
-import { useHistory } from "../../context/historyContext";
 // 多語系
 import { useI18n } from "@/components/i18n-provider";
 import VoiceTransformText from "@/components/voiceTransformText";
+// api：機器人回覆
+import { apiService } from "@/lib/api";
+// api：向機器人提問
+import { ChatQuestionRequest } from "@/lib/api";
+import {getPersonId} from "@/lib/user";
 
 // 定義 ChatPage 元件
 export default function ChatPage() {
@@ -20,16 +23,19 @@ export default function ChatPage() {
     const { t } = useI18n();
     // 取得動態路由參數 chatId，歷史紀錄中對應的 id
     const { chatId } = useParams();
-    // 取得刷新歷史列表的方法
-    const { refreshHistory } = useHistory();
 
     // 狀態：訊息列表
     const [messages, setMessages] = useState<Message[]>([]);
     // 狀態：輸入框文字
     const [input, setInput] = useState("");
+    // 狀態：注音是否在拼寫中
     const [isComposing, setIsComposing] = useState(false);
     // 狀態：機器人是否正在「打字」
     const [isTyping, setIsTyping] = useState(false);
+    // 用 useRef 追蹤最新值，不受 React state 異步更新的影響，狀態更新不夠即時
+    const isThinkingRef = useRef(false);
+    // 狀態：機器人是否正在「思考中」（等回覆中）
+    const [isThinking, setIsThinking] = useState(false);
 
     /**
      * 打字機效果，用於保存 setInterval ID，以便停止打字時清除 interval
@@ -55,8 +61,43 @@ export default function ChatPage() {
         });
     };
 
+    // 設定最新值：機器人是否在思考
+    const setThinking = (val: boolean) => {
+        isThinkingRef.current = val;
+        setIsThinking(val);
+    };
+
     // 當 messages 每次更新時，執行 scrollToBottom 自動滾動到底部
     useEffect(() => { scrollToBottom(); }, [messages]);
+
+    // 初始化：載入此 chatId 的歷史聊天紀錄, deps: chatId 改變重新載入
+    useEffect(() => {
+        // 若沒有 chatId，直接跳出
+        if (!chatId || Array.isArray(chatId)) return;
+        // 從 localStorage 取資料
+        const chat = getChatById(chatId);
+        // 沒資料就不用載入
+        if (!chat) return;
+
+        // 載入歷史訊息到畫面
+        setMessages(chat.messages);
+
+        // 取得最後一筆訊息
+        const lastMsg = chat.messages[chat.messages.length - 1];
+        // 若最後一筆是 robot 且 content 還是空字串 → 表示之前打字還沒完成 or 代表這是新創建的對話
+        if (lastMsg?.role === "robot" && lastMsg.content === "") {
+            // 找到 user 的訊息
+            const userMsg = chat.messages[chat.messages.length - 2];
+            if (userMsg) {
+                // 計算機器人訊息的 index，append 在最後一筆，因此 index 是 newList.length - 1
+                const botIndex = chat.messages.length - 1;
+                // robot 開始思考，代表要打 api
+                setThinking(true);
+                // 開始機器人回覆的流程
+                handleBotFlow(userMsg.content, botIndex, chatId);
+            }
+        }
+    }, [chatId]);
 
     /**
      * 打字機效果，模擬 robot 一個字一個字輸出
@@ -114,8 +155,15 @@ export default function ChatPage() {
         });
     };
 
-    // 停止打字效果（使用者按停止按鈕 or 輸入完畢）
-    const stopTyping = () => {
+    /**
+     *  停止機器人回覆
+     *  第一種：停止思考效果
+     *  第二種：停止打字效果（使用者按停止按鈕 or 輸入完畢）
+     */
+    const stopThinkingOrTyping = () => {
+        // 設定 robot 不再思考（不接受 api 回覆的內容）
+        setThinking(false);
+
         // 停止計時器
         if (typingInterval.current != null) {
             clearInterval(typingInterval.current!);
@@ -123,46 +171,72 @@ export default function ChatPage() {
         }
         // 設定 robot 不再打字
         setIsTyping(false);
-    };
 
-    // 初始化：載入此 chatId 的歷史聊天紀錄, deps: chatId 改變重新載入
-    useEffect(() => {
-        // 若沒有 chatId，直接跳出
-        if (!chatId) return;
-        // 從 localStorage 取資料
-        const chat = getChatById(chatId);
-        // 沒資料就不用載入
-        if (!chat) return;
+        /**
+         * 若停止(不管是思考中 or 打字中)時，最後一筆 robot 訊息是空的
+         *   → 補上提示訊息： 用戶已終止生成，請重新再次提出問題！！
+         *
+         * 若停止（打字中）時，最後一筆 robot 訊息是有一半內容的
+         *   → 目前打到一半的內容進行保存
+         */
+        setMessages(prev => {
+            // 複製 messages 陣列（避免直接修改）
+            const newList = [...prev];
+            // 找到要更新的那筆 robot 訊息
+            const msg = newList[newList.length - 1];
+            if (msg && msg.role === "robot") {
+                // 最後一筆 robot 訊息是空的,補上提示訊息
+                if (msg.content === "") {
+                    newList[newList.length - 1] = {
+                        ...msg,
+                        content: "用戶已終止生成，請重新再次提出問題！！"
+                    };
+                }
 
-        // 載入歷史訊息到畫面
-        setMessages(chat.messages);
-
-        // 取得最後一筆訊息
-        const lastMsg = chat.messages[chat.messages.length - 1];
-        // 若最後一筆是 robot 且 content 還是空字串 → 表示之前打字還沒完成 or 代表這是新創建的對話
-        if (lastMsg?.role === "robot" && lastMsg.content === "") {
-            // 找到 user 的訊息
-            const userMsg = chat.messages[chat.messages.length - 2];
-            if (userMsg) {
-                // robot 開始打字，代表要開始回覆了
-                setIsTyping(true);
-                // 機器人回覆的接口：要輸出的文字（先簡單模擬，之後要改成傳接 api）
-                const botReply = `你剛剛說的是 "${userMsg.content}"`;
-                // 開始打字
-                if (!Array.isArray(chatId)) {
-                    typeWriter(botReply, chat.messages.length - 1, chatId).then(() => {
-                        // 設定為「停止打字」
-                        setIsTyping(false);
-                    });
+                // 若沒有 chatId，直接跳出
+                if (!chatId || Array.isArray(chatId)) {
+                    return newList;
+                } else {
+                    saveHistory(newList, chatId);
                 }
             }
-        }
-    }, [chatId]);
+            return newList;
+        });
+
+    };
+
+    /**
+     * 封裝機器人回覆流程：
+     * 1. 呼叫 API
+     * 2. 若是點擊暫停而已停止思考，那就直接中止
+     * 3. 若是正常得到機器人回覆，那就停止思考
+     * 4. 開始打字效果
+     */
+    async function handleBotFlow(
+        userInput: string,
+        botIndex: number,
+        chatId: string
+    ) {
+        const botReply = await handleRobotResponse(userInput, chatId);
+
+        // 若使用者中途按了停止，就不執行後面的打字
+        if (!isThinkingRef.current) return;
+
+        // 停止思考
+        setThinking(false);
+        // 開始打字
+        setIsTyping(true);
+
+        // 開始打字機效果
+        await typeWriter(botReply, botIndex, chatId);
+        // 打字結束
+        setIsTyping(false);
+    }
 
     // sendMessage：當 user 點擊送出或按下 Enter 時執行
     const sendMessage = () => {
         // 若輸入空白或正在打字則忽略
-        if (!input.trim() || !chatId || isTyping) return;
+        if (!input.trim() || !chatId || isTyping || Array.isArray(chatId)) return;
 
         // 去除前後空白
         const userInput = input.trim();
@@ -177,29 +251,44 @@ export default function ChatPage() {
                 { role: "user", content: userInput },
                 { role: "robot", content: "" }
             ];
+            // 計算機器人訊息的 index，append 在最後一筆，因此 index 是 newList.length - 1
+            const botIndex = newList.length - 1;
+
             // 儲存聊天紀錄
-            if (!Array.isArray(chatId)) {
-                saveHistory(newList, chatId);
-            }
+            saveHistory(newList, chatId);
 
-            // 啟動打字效果，正在打字
-            setIsTyping(true);
-            // 要輸出的機器人文字
-            const botReply = `你剛剛說的是 "${userInput}"`;
-            // 開始打字機效果
-            if (!Array.isArray(chatId)) {
-                typeWriter(botReply, newList.length - 1, chatId).then(() => {
-                    // 設定為「停止打字」
-                    setIsTyping(false);
-                })
+            // robot 開始思考，代表要打 api
+            setThinking(true);
 
-            }
-
+            // 開始機器人回覆的流程
+            handleBotFlow(userInput, botIndex, chatId)
 
             // 更新畫面
             return newList;
         });
     };
+
+    // api：機器人回覆
+    async function handleRobotResponse(userInput: string, chatId: string){
+        /**
+         * chatinput：使用者的問題
+         * empId：從 localStorage 取得員工編號
+         * chatId：對話 id 用來給 agent 存 memory
+         * prompt：風格定義
+         */
+        const request: ChatQuestionRequest = {
+            chatinput: userInput,
+            empId: getPersonId(),
+            chatId: chatId,
+            prompt: "",
+        };
+        const robotResponse = await apiService.fetchRobotResponse(request);
+        if (robotResponse.output) {
+            return robotResponse.output
+        } else {
+            return "回覆出現異常，請重新生成！"
+        }
+    }
 
     return (
         // 外層容器：垂直排列，填滿高度
@@ -230,12 +319,27 @@ export default function ChatPage() {
                             </div>
                             {/* 訊息內容泡泡 */}
                             <div
-                                className={`p-3 rounded-xl shadow-sm text-sm whitespace-pre-line break-words ${
-                                    isUser ? "bg-white/20 text-white" : "bg-transparent text-white"
+                                className={`p-3 rounded-xl text-sm whitespace-pre-line break-words ${
+                                    isUser ? "bg-white/20 text-white shadow-sm" : "bg-transparent text-white"
                                 }`}
                                 style={{ maxWidth: "66%" }}
                             >
-                                {m.content}
+                                {isUser ? (
+                                    m.content
+                                ) : (
+                                    <>
+                                        {(isThinking && !m.content) ? (
+                                            // 機器人訊息尚未產生 → 顯示 loading dots
+                                            <span className="flex items-center gap-1 relative top-1">
+                                                 <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-0"></span>
+                                                <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-200"></span>
+                                                <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-400"></span>
+                                            </span>
+                                        ) : (
+                                            m.content
+                                        )}
+                                    </>
+                                )}
                             </div>
                         </div>
                     );
@@ -285,14 +389,14 @@ export default function ChatPage() {
                 />
                 {/* 送出 / 停止按鈕 */}
                 <button
-                    onClick={isTyping ? stopTyping : sendMessage}
+                    onClick={isTyping || isThinking ? stopThinkingOrTyping : sendMessage}
                     className={`px-6 py-2 rounded-xl text-sm flex items-center justify-center border border-white/30 text-white transition ${
                         isTyping ? "bg-white/10 hover:bg-white/20" : "bg-white/20 hover:bg-white/30"
                     }`}
                     // 語音不能正在識別中
                     disabled={isListening}
                 >
-                    { isTyping
+                    { isTyping || isThinking
                         ? (<Pause size={20} />)
                         : ( isListening
                             // 錄音中 → 顯示禁止 icon

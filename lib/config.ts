@@ -19,3 +19,7 @@ export const USER_STORAGE_KEY = "witsHubUser";
 export const HISTORY_STORAGE_KEY = "chatHistory";
 // 偏好清單
 export const PREFERENCE_STORAGE_KEY = "preferenceList";
+
+
+// api url
+export const CHAT_API_URL = "https://uat-n8n.wits.com/webhook/";

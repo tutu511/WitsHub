@@ -6,8 +6,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // 匯入 React 的基本 Hook
 import {useEffect, useState} from "react";
-// useParams 用來取得動態路由參數
-import { useParams } from "next/navigation";
 // 根據 chatId 獲取歷史紀錄
 import { getChatById } from "@/lib/chatHistory";
 // 新增/更新到 Firestore 的 db
@@ -34,7 +32,7 @@ export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
 
     // 處理分享聊天的事件
     const handleShare = async () => {
-        if (!chatId) return;
+        if (!chatId || Array.isArray(chatId)) return;
 
         // 根據 chatId 獲取歷史紀錄
         const chat = getChatById(chatId);
@@ -45,10 +43,8 @@ export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
             `${m.role === "user" ? "user" : "robot"}：${m.content}`
         );
 
-        if (!Array.isArray(chatId)) {
-            // 儲存到 Firestore
-            await saveChatToFirestore(chatId, messagesText, chat.title, personId || "訪客");
-        }
+        // 儲存到 Firestore
+        await saveChatToFirestore(chatId, messagesText, chat.title, personId || "訪客");
 
         // 生成分享 URL，這裡用 GitHub Pages 頁面
         setShareUrl(`https://tutu511.github.io/WitsHub/share/chat.html?id=${chatId}`);
