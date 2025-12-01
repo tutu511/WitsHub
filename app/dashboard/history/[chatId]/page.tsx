@@ -20,6 +20,7 @@ import {getPersonId} from "@/lib/user";
 // 獲取風格
 import { getReplyPreference } from "@/lib/preference";
 import {ChatToolbar} from "@/components/chatToolbar";
+import {CHAT_IMAGE_URL} from "@/lib/config";
 
 // 定義 ChatPage 元件
 export default function ChatPage() {
@@ -392,7 +393,9 @@ export default function ChatPage() {
                                                     {/* 若有圖片，顯示在下面 */}
                                                     {m.img && (
                                                         <img
-                                                            src={`/robot-images/${m.img}`}
+                                                            src={ m.img.startsWith(CHAT_IMAGE_URL)
+                                                                ? m.img
+                                                                : `/robot-images/${m.img}`}
                                                             alt="robot response"
                                                             className="mt-3 max-w-full"
                                                         />
