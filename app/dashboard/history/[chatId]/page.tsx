@@ -19,6 +19,7 @@ import { ChatQuestionRequest } from "@/lib/api";
 import {getPersonId} from "@/lib/user";
 // 獲取風格
 import { getReplyPreference } from "@/lib/preference";
+import {ChatToolbar} from "@/components/chatToolbar";
 
 // 定義 ChatPage 元件
 export default function ChatPage() {
@@ -297,6 +298,20 @@ export default function ChatPage() {
         });
     };
 
+    // 清除某一次的機器人回覆的紀錄
+    function handleRemoveRobotResponse(removeIndex: number) {
+        // 若沒有 chatId，直接跳出
+        if (!chatId || Array.isArray(chatId)) return;
+
+        // 清空對應 robot 訊息內容
+        setMessages(prev => {
+            const newList = [...prev];
+            newList[removeIndex] = { ...newList[removeIndex], content: "", img: "" };
+            saveHistory(newList, chatId);
+            return newList;
+        });
+    }
+
     // api：機器人回覆
     async function handleRobotResponse(userInput: string, chatId: string): Promise<RobotResponse>{
         // 獲取當前登錄的用戶(從 localStorage 取得員工編號)
@@ -349,41 +364,62 @@ export default function ChatPage() {
                                     <img src="/pic-wits.png" alt="WitsHub" className="w-full h-full object-cover" />
                                 )}
                             </div>
-                            {/* 訊息內容泡泡 */}
-                            <div
-                                className={`p-3 rounded-xl text-sm whitespace-pre-line break-words ${
-                                    isUser ? "bg-white/20 text-white shadow-sm" : "bg-transparent text-white"
-                                }`}
-                                style={{ maxWidth: "66%" }}
-                            >
-                                {isUser ? (
-                                    m.content
-                                ) : (
-                                    <>
-                                        {(isThinking && !m.content) ? (
-                                            // 機器人訊息尚未產生 → 顯示 loading dots
-                                            <span className="flex items-center gap-1 relative top-1">
+
+                            {/* 外層：垂直排列「訊息泡泡 + 底部工具欄」 */}
+                            <div className="group flex flex-col gap-1" style={{ maxWidth: "66%" }}>
+                                {/* 訊息內容泡泡 */}
+                                <div
+                                    className={`rounded-xl text-sm whitespace-pre-line break-words ${
+                                        isUser ? "p-3 bg-white/20 text-white shadow-sm" : "p-2 bg-transparent text-white"
+                                    }`}
+                                >
+                                    {isUser ? (
+                                        m.content
+                                    ) : (
+                                        <>
+                                            {(isThinking && !m.content) ? (
+                                                // 機器人訊息尚未產生 → 顯示 loading dots
+                                                <span className="flex items-center gap-1 relative top-1">
                                                  <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-0"></span>
                                                 <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-200"></span>
                                                 <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-400"></span>
                                             </span>
-                                        ) : (
-                                            <>
-                                                {/* 先顯示文字 */}
-                                                <div>{m.content}</div>
+                                            ) : (
+                                                <>
+                                                    {/* 先顯示文字 */}
+                                                    <div>{m.content}</div>
 
-                                                {/* 若有圖片，顯示在下面 */}
-                                                {m.img && (
-                                                    <img
-                                                        src={`/robot-images/${m.img}`}
-                                                        alt="robot response"
-                                                        className="mt-3 max-w-full"
-                                                    />
-                                                )}
-                                            </>
-                                        )}
-                                    </>
-                                )}
+                                                    {/* 若有圖片，顯示在下面 */}
+                                                    {m.img && (
+                                                        <img
+                                                            src={`/robot-images/${m.img}`}
+                                                            alt="robot response"
+                                                            className="mt-3 max-w-full"
+                                                        />
+                                                    )}
+                                                </>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* 底部工具欄 */}
+                                <ChatToolbar
+                                    isUser={isUser}
+                                    index={i}
+                                    isLastUserMessage={isUser && i == (messages.length - 2)}
+                                    content={m.content}
+                                    isDisableGenerate={isThinking || isTyping}
+                                    onRegenerate={(removeIndex) => {
+                                        handleRemoveRobotResponse(removeIndex);
+
+                                        // 取得對應 user 訊息
+                                        const userMsg = messages[removeIndex - 1];
+                                        if (userMsg && chatId && !Array.isArray(chatId)) {
+                                            handleBotFlow(userMsg.content, removeIndex, chatId);
+                                        }
+                                    }}
+                                />
                             </div>
                         </div>
                     );
