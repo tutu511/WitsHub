@@ -2,8 +2,6 @@
 
 // 關閉彈窗的 icon
 import { X } from "lucide-react";
-// 按鈕
-import { Button } from "@/components/ui/button";
 // 匯入 React 的基本 Hook
 import {useEffect, useState} from "react";
 // 根據 chatId 獲取歷史紀錄
