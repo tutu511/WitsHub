@@ -23,3 +23,6 @@ export const PREFERENCE_STORAGE_KEY = "preferenceList";
 
 // api url
 export const CHAT_API_URL = "https://uat-n8n.wits.com/webhook/";
+
+// img url
+export const CHAT_IMAGE_URL = "https://ess.wits.com";
