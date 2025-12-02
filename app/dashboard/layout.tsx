@@ -261,7 +261,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
             {/* 主要 layout：側邊欄 + 主要內容 */}
             <div className="relative z-10 flex h-screen min-h-0 flex-col lg:flex-row">
-                <aside className="w-full lg:w-80 flex-shrink-0 p-4 sm:p-6 min-h-0">
+                <aside className="w-full lg:w-80 flex-shrink-0 p-4 sm:p-7 min-h-0">
                     {/* 使用 GlassPanel 包裹內容 */}
                     <GlassPanel className="flex h-full min-h-0 flex-col overflow-hidden px-5 py-6 gap-6">
                         {/* 標題 */}
@@ -469,7 +469,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </aside>
 
                 {/* 主內容區 */}
-                <main className="flex-1 min-h-0 flex flex-col p-4 sm:p-10 gap-6 overflow-hidden">
+                <main className="flex-1 min-h-0 flex flex-col p-4 sm:p-7 gap-6 overflow-hidden">
                     {/*是否要顯示分享的二維碼*/}
                     { isOpenShare && selectedChatId != null && (
                         <ShareChatDialog
