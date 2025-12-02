@@ -10,6 +10,7 @@ interface ChatToolbarProps {
     isUser: boolean;
     index: number;
     isLastUserMessage: boolean;
+    isLastRobotMessage: boolean;
     content: string;
     isDisableGenerate: boolean;
     onRegenerate: (index: number) => void;
@@ -26,7 +27,7 @@ interface ChatToolbarProps {
  *   永遠顯示：機器人的回覆 + 使用者最後一個問題
  *   hover 顯示：使用者的問題（除了最後一筆例外顯示）
  */
-export function ChatToolbar({isUser, index, isLastUserMessage, content, isDisableGenerate, onRegenerate}: ChatToolbarProps) {
+export function ChatToolbar({isUser, index, isLastUserMessage, isLastRobotMessage, content, isDisableGenerate, onRegenerate}: ChatToolbarProps) {
     // 是否複製成功
     const [isCopySuccess, setIsCopySuccess] = useState(false);
     // 永遠顯示的條件
@@ -69,7 +70,7 @@ export function ChatToolbar({isUser, index, isLastUserMessage, content, isDisabl
                     : <Copy size={15} className="transition-opacity duration-200" /> }
             </button>
 
-            {!isUser &&
+            {!isUser && isLastRobotMessage &&
                 // 機器人訊息 → 重新生成
                 <button
                     onClick={() => onRegenerate(index)}

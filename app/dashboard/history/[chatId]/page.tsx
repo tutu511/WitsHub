@@ -411,6 +411,7 @@ export default function ChatPage() {
                                     isUser={isUser}
                                     index={i}
                                     isLastUserMessage={isUser && i == (messages.length - 2)}
+                                    isLastRobotMessage={!isUser && i == (messages.length - 1)}
                                     content={m.content}
                                     isDisableGenerate={isThinking || isTyping}
                                     onRegenerate={(removeIndex) => {
