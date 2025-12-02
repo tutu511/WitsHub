@@ -219,7 +219,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const commitRename = () => {
         if (!editingId || renameSubmittingRef.current) return;
         renameSubmittingRef.current = true;
-        const nextTitle = editingTitle.trim() || "新對話";
+        const nextTitle = editingTitle.trim() || t("chat.defaultTitle");
         renameHistory(editingId, nextTitle);
         setEditingId(null);
         setEditingTitle("");
@@ -267,7 +267,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                         {/* 標題 */}
                         <div>
                             <p className="text-xs uppercase tracking-[0.4em] text-slate-400">WitsHub</p>
-                            <p className="text-2xl font-light text-white mt-1">企業智庫</p>
+                            <p className="text-2xl font-light text-white mt-1">{t("sidebar.subtitle")}</p>
                             <p className="text-sm text-slate-300 mt-2">All in AI. All in One.</p>
                         </div>
 
@@ -299,7 +299,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                         {/*如果沒有歷史顯示提示*/}
                                         {historyList.length === 0 && (
                                             <p className="text-xs text-slate-400 px-3 py-2 rounded-2xl bg-white/5 border border-white/5">
-                                                尚無歷史對話
+                                                {t("history.empty")}
                                             </p>
                                         )}
 
@@ -352,7 +352,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                                     }
                                                                 }}
                                                                 className="w-full bg-transparent border-none outline-none text-white placeholder:text-white/60 text-xs"
-                                                                aria-label="重新命名對話"
+                                                                aria-label={t("history.rename.aria")}
                                                             />
                                                         </div>
                                                     ) : (
@@ -363,7 +363,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                     )}
                                                     <button
                                                         type="button"
-                                                        aria-label="更多選項"
+                                                        aria-label={t("history.more")}
                                                         // 點擊開啟該歷史的選單
                                                         onClick={event => handleMenuToggle(event, history.id)}
                                                         className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/70 transition ${
@@ -392,7 +392,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                                         startRenaming(history.id, history.title);
                                                                     }}
                                                                 >
-                                                                    重新命名
+                                                                    {t("history.rename")}
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -410,7 +410,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                                         setOpenShare(true);
                                                                     }}
                                                                 >
-                                                                    分享
+                                                                    {t("history.share")}
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -438,7 +438,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                                                         closeMenu();
                                                                     }}
                                                                 >
-                                                                    刪除
+                                                                    {t("history.delete")}
                                                                 </button>
                                                             </div>,
                                                             document.body
@@ -461,8 +461,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                 href="/dashboard/profile"
                                 className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-sm font-medium text-white bg-white/15 hover:bg-white/20 transition"
                             >
-                                <img src="/pic-1.png" alt="使用者頭像" className="w-8 h-8 rounded-full object-cover" />
-                                <span>{storedUsername ?? "個人資料"}</span>
+                                <img src="/pic-1.png" alt={t("common.userAvatarAlt")} className="w-8 h-8 rounded-full object-cover" />
+                                <span>{storedUsername ?? t("profile.title")}</span>
                             </Link>
                         </div>
                     </GlassPanel>

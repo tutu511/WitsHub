@@ -73,9 +73,9 @@ export default function NewChatPage() {
             {/*標題*/}
             <div className="text-center space-y-6 mb-8">
                 <p className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs tracking-[0.4em] uppercase bg-white/5 border border-white/20 text-slate-200">
-                    <Sparkles size={14} /> All in AI
+                    <Sparkles size={14} /> {t("chat.hero.badge")}
                 </p>
-                <h2 className="text-4xl font-light">向 WitsHub 提問，讓多領域 AI 專家為你協作解答</h2>
+                <h2 className="text-4xl font-light">{t("chat.hero.title")}</h2>
             </div>
 
             <div className="w-full max-w-3xl">

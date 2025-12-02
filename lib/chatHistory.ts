@@ -1,6 +1,7 @@
 "use client";
 import {HISTORY_STORAGE_KEY } from "@/lib/config";
 import {getPersonId} from "@/lib/user";
+import { translate } from "@/lib/i18n";
 
 /**
  * 對話信息
@@ -44,7 +45,7 @@ export const saveHistory = (messages: Message[], chatId?: string): string => {
         if (idx >= 0) {
             // 將該筆歷史的 messages 更新為傳入的 messages
             // 保留既有的標題（避免後續訊息更新時覆蓋掉先前生成的標題）
-            const nextTitle = prev[idx].title || messages[0]?.content || "新對話";
+            const nextTitle = prev[idx].title || messages[0]?.content || translate("chat.defaultTitle");
             prev[idx] = { ...prev[idx], messages, title: nextTitle };
             // 把修改後的 prev（整個陣列）序列化回 localStorage，覆寫原來的資料
             localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(prev));
@@ -65,7 +66,7 @@ export const saveHistory = (messages: Message[], chatId?: string): string => {
     const history: ChatHistory = {
         id: newId,
         personId: personId,
-        title: messages[0]?.content || "新對話",
+        title: messages[0]?.content || translate("chat.defaultTitle"),
         messages,
     };
     // 將新的 history 放在陣列開頭（代表最新），然後與 prev 合併成新的陣列，序列化後寫回 localStorage
@@ -116,7 +117,7 @@ export const renameHistoryTitle = (chatId: string, newTitle: string) => {
     const idx = list.findIndex(item => item.id === chatId);
     if (idx === -1) return;
 
-    const safeTitle = newTitle.trim() || "新對話";
+    const safeTitle = newTitle.trim() || translate("chat.defaultTitle");
     list[idx] = { ...list[idx], title: safeTitle };
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(list));
 };

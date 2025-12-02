@@ -5,6 +5,7 @@
 import { Copy, RefreshCw, RefreshCwOff, SquareCheckBig } from "lucide-react";
 // 狀態
 import { useState } from "react";
+import { useI18n } from "@/components/i18n-provider";
 
 interface ChatToolbarProps {
     isUser: boolean;
@@ -28,6 +29,7 @@ interface ChatToolbarProps {
  *   hover 顯示：使用者的問題（除了最後一筆例外顯示）
  */
 export function ChatToolbar({isUser, index, isLastUserMessage, isLastRobotMessage, content, isDisableGenerate, onRegenerate}: ChatToolbarProps) {
+    const { t } = useI18n();
     // 是否複製成功
     const [isCopySuccess, setIsCopySuccess] = useState(false);
     // 永遠顯示的條件
@@ -63,7 +65,7 @@ export function ChatToolbar({isUser, index, isLastUserMessage, isLastRobotMessag
             <button
                 onClick={ handleCopy }
                 className="flex items-center gap-1 text-white/70 hover:text-white text-xs"
-                title="複製"
+                title={t("chat.copy")}
             >
                 {isCopySuccess
                     ? <SquareCheckBig size={15} className="transition-opacity duration-200" />
@@ -75,7 +77,7 @@ export function ChatToolbar({isUser, index, isLastUserMessage, isLastRobotMessag
                 <button
                     onClick={() => onRegenerate(index)}
                     className="flex items-center gap-1 text-white/70 hover:text-white text-xs"
-                    title="重新生成"
+                    title={t("chat.regenerate")}
                     disabled={isDisableGenerate}
                 >
                     { isDisableGenerate ?  <RefreshCwOff size={15} /> : <RefreshCw size={15} /> }

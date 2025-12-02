@@ -1,10 +1,10 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { getTranslation } from "@/lib/i18n";
+import { getStoredLocale, getTranslation, type Locale } from "@/lib/i18n";
 
 // ✅ 匯出給外部引用的型別
-export type Locale = "zh-TW" | "en";
+export type { Locale };
 
 interface I18nContextProps {
     t: (key: string) => string;
@@ -20,25 +20,11 @@ const I18nContext = createContext<I18nContextProps>({
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
     const [locale, setLocale] = useState<Locale>("zh-TW");
-    const [translations, setTranslations] = useState<Record<string, string>>({});
+    const [translations, setTranslations] = useState<Record<string, string>>(() => getTranslation("zh-TW"));
 
     // ✅ 初始化語系邏輯
     useEffect(() => {
-        // 1️⃣ 優先從 localStorage 讀取使用者設定
-        const saved = localStorage.getItem("locale") as Locale | null;
-        if (saved) {
-            setLocale(saved);
-            setTranslations(getTranslation(saved));
-            return;
-        }
-
-        // 2️⃣ 否則從瀏覽器自動偵測
-        const browserLang = navigator.language.toLowerCase();
-
-        let detected: Locale = "zh-TW";
-        if (browserLang.startsWith("en")) detected = "en";
-        else if (browserLang.startsWith("zh")) detected = "zh-TW";
-
+        const detected = getStoredLocale();
         setLocale(detected);
         localStorage.setItem("locale", detected);
         setTranslations(getTranslation(detected));
