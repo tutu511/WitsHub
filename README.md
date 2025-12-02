@@ -22,3 +22,6 @@ pnpm run start
 # 檢視網頁
 # 打開瀏覽器訪問
 http://localhost:3000
+
+# robot-images 靜態資源
+# 請找開發人員
