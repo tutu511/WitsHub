@@ -4,17 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, saveUser } from "@/lib/user";
 import { LanguageSwitcher } from "@/components/languageSwitcher";
+import { useI18n } from "@/components/i18n-provider";
 
 // Demo 帳號密碼配置
 const DEMO_ACCOUNTS : User[] = [
-  { username: "TP2509034", password: "zaq12wsx", email:"CindyYang1@wits.com", personName: "王芸若", role: "軟體開發設計師"},
-  { username: "abc", password: "123", email:"CindyYang2@wits.com", personName: "測試者1", role: "工程師"},
-  { username: "def", password: "456", email:"CindyYang3@wits.com", personName: "測試者2", role: "工程師"},
-  { username: "TP2412020", password: "zaq12wsx", email:"KelseyLin@wits.com", personName: "林采薇", role: "軟體開發設計師"},
-  { username: "TP2407045", password: "123456", email:"FangYuTu@wits.com", personName: "涂芳瑜", role: "軟體開發設計師"}
+  { username: "TP2509034", password: "12345678", email:"RubyWang@wits.com", personName: "王芸若", role: "資深專員"},
+  { username: "TP2509041", password: "12345678", email:"LucyHuang@wits.com", personName: "莊于萱", role: "軟體開發資深工程師"},
+  { username: "TP2412020", password: "zaq12wsx", email:"KelseyLin@wits.com", personName: "林采薇", role: "軟體開發工程師"},
+  { username: "TP2407045", password: "123456", email:"FangYuTu@wits.com", personName: "涂芳瑜", role: "軟體開發工程師"}
 ];
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,7 +39,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     }
     else {
-      setError("帳號或密碼錯誤");
+      setError(t("login.error.invalidCredentials"));
       setIsLoading(false);
     }
   };
@@ -71,12 +72,12 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="username" className="text-slate-200 text-sm">
-                帳號
+                {t("login.username")}
               </label>
               <input
                 id="username"
                 type="text"
-                placeholder="請輸入帳號"
+                placeholder={t("login.username.placeholder")}
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
@@ -89,12 +90,12 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <label htmlFor="password" className="text-slate-200 text-sm">
-                密碼
+                {t("login.password")}
               </label>
               <input
                 id="password"
                 type="password"
-                placeholder="請輸入密碼"
+                placeholder={t("login.password.placeholder")}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -116,7 +117,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full py-3 font-semibold rounded-xl text-white bg-white/10 border border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.12)] hover:bg-white/15 hover:shadow-[0_0_25px_rgba(255,255,255,0.18)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
             >
-              {isLoading ? "登入中..." : "登入"}
+              {isLoading ? t("login.submitting") : t("login.submit")}
             </button>
           </form>
         </div>

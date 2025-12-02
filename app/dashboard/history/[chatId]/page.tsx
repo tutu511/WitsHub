@@ -229,7 +229,7 @@ export default function ChatPage() {
         if (!chatId || Array.isArray(chatId)) return
         // 計算機器人訊息的 index，終止的是最後一筆
         const botIndex = messages.length -1 ;
-        updateMessages(botIndex, "用戶已終止生成，請重新再次提出問題！！", 0, "", chatId, false)
+        updateMessages(botIndex, t("chat.stop"), 0, "", chatId, false)
 
     };
 
@@ -334,7 +334,7 @@ export default function ChatPage() {
         if (robotResponse.output) {
             return robotResponse
         } else {
-            return { output: "回覆出現異常，請重新生成！", img: ""}
+            return { output: t("chat.error"), img: ""}
         }
     }
 
@@ -360,7 +360,7 @@ export default function ChatPage() {
                                 }`}
                             >
                                 {isUser ? (
-                                    <img src="/pic-1.png" alt="使用者頭像" className="w-full h-full object-cover" />
+                                    <img src="/pic-1.png" alt={t("common.userAvatarAlt")} className="w-full h-full object-cover" />
                                 ) : (
                                     <img src="/pic-wits.png" alt="WitsHub" className="w-full h-full object-cover" />
                                 )}

@@ -15,6 +15,7 @@ import { saveChatToFirestore } from "@/lib/firebase";
  */
 import QRCode from "react-qr-code";
 import {getPersonName} from "@/lib/user";
+import { translate } from "@/lib/i18n";
 
 // 傳入聊天的 id
 type ShareChatDialogProps = {
@@ -42,7 +43,7 @@ export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
         );
 
         // 儲存到 Firestore
-        await saveChatToFirestore(chatId, messagesText, chat.title, personId || "訪客");
+        await saveChatToFirestore(chatId, messagesText, chat.title, personId || translate("common.guest"));
 
         // 生成分享 URL，這裡用 GitHub Pages 頁面
         setShareUrl(`https://tutu511.github.io/WitsHub/share/chat.html?id=${chatId}`);
@@ -69,4 +70,3 @@ export function ShareChatDialog({ chatId, onClose }: ShareChatDialogProps) {
         </>
     );
 }
-

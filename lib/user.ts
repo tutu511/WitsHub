@@ -1,4 +1,5 @@
 import {USER_STORAGE_KEY} from "@/lib/config";
+import { translate } from "@/lib/i18n";
 
 /**
  * 用戶信息
@@ -49,13 +50,13 @@ export const saveUser = (user: User) => {
 // 從 localstorage 獲取用戶姓名
 export const getPersonName = (): string  => {
     const user = readStoredUser();
-    return user?.personName || "訪客";
+    return user?.personName || translate("common.guest");
 }
 
 // 從 localstorage 獲取用戶角色
 export const getPersonRole = (): string => {
     const user = readStoredUser();
-    return user?.role || "未設定";
+    return user?.role || translate("profile.role.unset");
 };
 
 // 從 localstorage 獲取用戶帳號（工號）

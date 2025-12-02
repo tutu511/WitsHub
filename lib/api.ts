@@ -1,4 +1,5 @@
 import { CHAT_API_URL } from "@/lib/config";
+import { translate } from "@/lib/i18n";
 
 // 機器人回答 api：request
 export interface ChatQuestionRequest {
@@ -72,7 +73,7 @@ class ApiService {
         } catch (error) {
             console.error("wits_hub error:", error);
             return {
-                output: "系統忙碌中，請稍後再試",
+                output: translate("common.busy"),
             };
         }
     }

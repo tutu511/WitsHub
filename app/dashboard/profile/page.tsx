@@ -3,12 +3,14 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { User, getUser, getPersonRole } from "@/lib/user";
+import { User, getUser } from "@/lib/user";
 import { deleteHistoryByPerson } from "@/lib/chatHistory";
 import { useHistory } from "@/app/dashboard/context/historyContext";
 import { getReplyPreference, removeReplyPreference, saveReplyPreference } from "@/lib/preference";
+import { useI18n } from "@/components/i18n-provider";
 
 export default function ProfilePage() {
+    const { t } = useI18n();
     const [userInfo, setUserInfo] = useState<User | null>(null);
     const [isClearing, setIsClearing] = useState(false);
     const [replyPreference, setReplyPreference] = useState("");
@@ -31,9 +33,9 @@ export default function ProfilePage() {
         setIsClient(true);
     }, []);
 
-    const displayName = userInfo?.personName?.trim() || "訪客";
+    const displayName = userInfo?.personName?.trim() || t("common.guest");
     const personId = userInfo?.username || "";
-    const role = userInfo?.role || "未設定";
+    const role = userInfo?.role || t("profile.role.unset");
 
     const handleOpenPreferenceModal = () => {
         if (!personId) return;
@@ -102,7 +104,7 @@ export default function ProfilePage() {
                     <div className="w-24 h-24 rounded-full overflow-hidden shadow-[0_20px_45px_rgba(59,130,246,0.45)] border border-white/10 bg-white/10">
                         <Image
                             src="/pic-1.png"
-                            alt={displayName || "使用者頭貼"}
+                            alt={displayName || t("common.userAvatarAlt")}
                             width={96}
                             height={96}
                             className="object-cover w-full h-full"
@@ -111,21 +113,21 @@ export default function ProfilePage() {
                     </div>
                     <div>
                         <p className="text-3xl font-semibold mt-1">{displayName}</p>
-                        <p className="text-sm text-slate-400 mt-1">歡迎回來，這裡可以查看你的帳號資訊與管理聊天紀錄</p>
+                        <p className="text-sm text-slate-400 mt-1">{t("profile.welcome")}</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">姓名</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t("profile.name.label")}</p>
                         <p className="text-xl font-semibold mt-2">{displayName}</p>
                     </div>
                     <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">員工編號</p>
-                        <p className="text-xl font-semibold mt-2">{personId || "未登入"}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t("profile.id.label")}</p>
+                        <p className="text-xl font-semibold mt-2">{personId || t("profile.id.notLoggedIn")}</p>
                     </div>
                     <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">角色</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t("profile.role.label")}</p>
                         <p className="text-xl font-semibold mt-2">{role}</p>
                     </div>
                 </div>
@@ -133,11 +135,11 @@ export default function ProfilePage() {
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-lg font-semibold">自訂風格與語氣</p>
+                            <p className="text-lg font-semibold">{t("profile.preference.title")}</p>
                             <p className="text-sm text-slate-300 mt-1">
                                 {replyPreference
-                                    ? `目前設定：${replyPreference}`
-                                    : "設定 AI 的回覆風格與語氣，讓對話更符合你的需求"}
+                                    ? `${t("profile.preference.currentPrefix")}${replyPreference}`
+                                    : t("profile.preference.subtitle")}
                             </p>
                         </div>
                         <button
@@ -146,7 +148,7 @@ export default function ProfilePage() {
                             disabled={!personId || isSavingPreference}
                             className="px-4 py-2 rounded-xl bg-slate-50/10 border border-white/15 hover:bg-slate-50/15 text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
                         >
-                            {isSavingPreference ? "儲存中..." : "自訂風格與語氣"}
+                            {isSavingPreference ? t("profile.preference.saving") : t("profile.preference.button")}
                         </button>
                     </div>
                 </div>
@@ -154,8 +156,8 @@ export default function ProfilePage() {
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent p-6">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-lg font-semibold">刪除所有聊天內容</p>
-                            <p className="text-sm text-red-200/80 mt-1">此動作無法復原</p>
+                            <p className="text-lg font-semibold">{t("profile.delete.title")}</p>
+                            <p className="text-sm text-red-200/80 mt-1">{t("profile.delete.subtitle")}</p>
                         </div>
                         <button
                             type="button"
@@ -163,7 +165,7 @@ export default function ProfilePage() {
                             disabled={!personId || isClearing}
                             className="px-4 py-2 rounded-xl bg-red-500/80 hover:bg-red-500 text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
                         >
-                            {isClearing ? "刪除中..." : "全部刪除"}
+                            {isClearing ? t("profile.delete.processing") : t("profile.delete.button")}
                         </button>
                     </div>
                 </div>
@@ -178,8 +180,8 @@ export default function ProfilePage() {
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-lg font-semibold text-white">自訂風格與語氣</p>
-                                    <p className="text-sm text-slate-300 mt-1">描述你希望 AI 呈現的語氣與風格</p>
+                                    <p className="text-lg font-semibold text-white">{t("profile.preference.title")}</p>
+                                    <p className="text-sm text-slate-300 mt-1">{t("profile.preference.subtitle")}</p>
                                 </div>
                                 <button
                                     type="button"
@@ -196,7 +198,7 @@ export default function ProfilePage() {
                                     id="replyPreference"
                                     value={preferenceDraft}
                                     onChange={(e) => setPreferenceDraft(e.target.value)}
-                                    placeholder="例如：溫暖、專業、友善、犀利"
+                                    placeholder={t("profile.preference.placeholder")}
                                     className="w-full min-h-[120px] rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-300/40"
                                 />
                             </div>
@@ -208,14 +210,14 @@ export default function ProfilePage() {
                                     disabled={!personId || isSavingPreference || (!replyPreference && !preferenceDraft)}
                                     className="px-4 py-2 rounded-xl border border-red-400/40 text-red-200 hover:bg-red-500/10 transition disabled:opacity-60"
                                 >
-                                    {isSavingPreference ? "刪除中..." : "刪除偏好"}
+                                    {isSavingPreference ? t("profile.preference.deleting") : t("profile.preference.delete")}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSavingPreference}
                                     className="px-5 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 hover:border-white/30 transition disabled:opacity-60"
                                 >
-                                    {isSavingPreference ? "儲存中..." : "儲存偏好"}
+                                    {isSavingPreference ? t("profile.preference.saving") : t("profile.preference.save")}
                                 </button>
                             </div>
                         </form>
@@ -229,8 +231,8 @@ export default function ProfilePage() {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4">
                         <div className="w-full max-w-md rounded-2xl bg-slate-900/90 border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.45)] p-6 space-y-5">
                             <div className="space-y-2">
-                                <p className="text-lg font-semibold text-white">刪除所有聊天內容</p>
-                                <p className="text-sm text-slate-300">確定要刪除所有聊天記錄嗎？此動作無法復原。</p>
+                                <p className="text-lg font-semibold text-white">{t("profile.delete.confirmTitle")}</p>
+                                <p className="text-sm text-slate-300">{t("profile.delete.confirmDescription")}</p>
                             </div>
                             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                                 <button
@@ -239,7 +241,7 @@ export default function ProfilePage() {
                                     disabled={isClearing}
                                     className="px-4 py-2 rounded-xl border border-white/15 text-slate-200 hover:bg-white/5 transition disabled:opacity-60"
                                 >
-                                    取消
+                                    {t("profile.delete.cancel")}
                                 </button>
                                 <button
                                     type="button"
@@ -247,7 +249,7 @@ export default function ProfilePage() {
                                     disabled={isClearing}
                                     className="px-5 py-2 rounded-xl bg-red-500/80 hover:bg-red-500 text-white font-semibold transition disabled:opacity-60"
                                 >
-                                    {isClearing ? "刪除中..." : "全部刪除"}
+                                    {isClearing ? t("profile.delete.processing") : t("profile.delete.button")}
                                 </button>
                             </div>
                         </div>
