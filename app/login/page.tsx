@@ -7,11 +7,10 @@ import { LanguageSwitcher } from "@/components/languageSwitcher";
 
 // Demo 帳號密碼配置
 const DEMO_ACCOUNTS : User[] = [
-  { username: "TP2509034", password: "zaq12wsx", email:"CindyYang1@wits.com", personName: "王芸若", role: "軟體開發設計師"},
-  { username: "abc", password: "123", email:"CindyYang2@wits.com", personName: "測試者1", role: "工程師"},
-  { username: "def", password: "456", email:"CindyYang3@wits.com", personName: "測試者2", role: "工程師"},
-  { username: "TP2412020", password: "zaq12wsx", email:"KelseyLin@wits.com", personName: "林采薇", role: "軟體開發設計師"},
-  { username: "TP2407045", password: "123456", email:"FangYuTu@wits.com", personName: "涂芳瑜", role: "軟體開發設計師"}
+  { username: "TP2509034", password: "12345678", email:"RubyWang@wits.com", personName: "王芸若", role: "資深專員"},
+  { username: "TP2509041", password: "12345678", email:"LucyHuang@wits.com", personName: "莊于萱", role: "軟體開發資深工程師"},
+  { username: "TP2412020", password: "zaq12wsx", email:"KelseyLin@wits.com", personName: "林采薇", role: "軟體開發工程師"},
+  { username: "TP2407045", password: "123456", email:"FangYuTu@wits.com", personName: "涂芳瑜", role: "軟體開發工程師"}
 ];
 
 export default function LoginPage() {
