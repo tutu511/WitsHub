@@ -1,6 +1,7 @@
 {
   "chat.title": "New chat",
   "history.title": "History",
+  "news.title": "AI news",
   "profile.title": "Profile",
   "sidebar.subtitle": "WitsHub",
   "chat.placeholder": "Please enter your question...",
@@ -50,5 +51,7 @@
   "common.guest": "Guest",
   "common.notSet": "Not set",
   "common.userAvatarAlt": "User avatar",
-  "common.busy": "System is busy, please try again later"
+  "common.busy": "System is busy, please try again later",
+  "common.refresh": "System is busy, click here to reload",
+  "news.subtitle": "Top 3 Events"
 }
