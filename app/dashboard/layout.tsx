@@ -5,7 +5,7 @@ import Link from "next/link";
 // 匯入 usePathname Hook，可以取得當前路由路徑（pathname）
 import { usePathname, useRouter } from "next/navigation";
 // icon
-import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal, Newspaper } from "lucide-react";
 // 匯入 useState Hook，用來建立狀態（historyExpanded）
 import { JSX, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -275,6 +275,21 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                             {/* 導航項目列表 */}
                             <nav className="space-y-3">{navItems.map(renderNavLink)}</nav>
 
+                            <Link
+                                href="/dashboard/news"
+                                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all duration-200 border border-transparent ${
+                                    normalizePath(pathname) === normalizePath("/dashboard/news")
+                                        ? "bg-white/15 text-white shadow-[0_10px_40px_rgba(59,130,246,0.35)] border-white/30"
+                                        : "text-slate-300 hover:text-white hover:bg-white/10"
+                                }`}
+                            >
+                                 <span className="flex items-center gap-3">
+                                        {/* 新聞圖示 icon（代表 AI 新知） */}
+                                     <Newspaper size={18} className="text-slate-400" />
+                                     {t("news.title")}
+                                    </span>
+                            </Link>
+
                             <div className="flex-1 min-h-0 flex flex-col">
                                 <button
                                     className="flex w-full items-center justify-between px-4 py-3 rounded-2xl text-sm text-slate-200 hover:bg-white/10 transition border border-transparent hover:border-white/5"
@@ -283,11 +298,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                 >
                                     <span className="flex items-center gap-3">
                                         {/* 時間圖示 icon（代表歷史紀錄） */}
-                                        <Clock size={16} className="text-slate-400" />
+                                        <Clock size={18} className="text-slate-400" />
                                         {t("history.title")}
                                     </span>
                                     {/* 展開或收合圖示 */}
-                                    {historyExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                    {historyExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                                 </button>
 
                                 {/*只有在 client 掛載完成且展開時才 render 列表*/}

@@ -1,5 +1,6 @@
 {
   "chat.title": "新對話",
+  "news.title": "AI 新知週報",
   "history.title": "歷史紀錄",
   "profile.title": "個人資料",
   "sidebar.subtitle": "企業智庫",
@@ -50,5 +51,7 @@
   "common.guest": "訪客",
   "common.notSet": "未設定",
   "common.userAvatarAlt": "使用者頭像",
-  "common.busy": "系統忙碌中，請稍後再試"
+  "common.busy": "系統忙碌中，請稍後再試",
+  "common.refresh": "系統忙線中，點擊此處重新載入",
+  "news.subtitle": "Top 3 事件"
 }

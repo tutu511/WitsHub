@@ -1,5 +1,5 @@
-import { CHAT_API_URL } from "@/lib/config";
 import { translate } from "@/lib/i18n";
+import {BASE_API_URL} from "@/lib/config";
 
 // 機器人回答 api：request
 export interface ChatQuestionRequest {
@@ -20,6 +20,30 @@ export interface RobotResponse {
     img?: string;
 }
 
+/**
+ * 機器人回答 api：Response
+ * digest_text_tw：新知（中文）
+ * digest_text_en：新知（英文）
+ * ai_questions_tw：問題（中文）
+ * ai_questions_en：問題（英文）
+ */
+export interface AINewsResponse {
+    digest_text_tw: digestText[];
+    digest_text_en: digestText[];
+    ai_questions_tw: string[];
+    ai_questions_en: string[];
+}
+
+/**
+ * digest_text 物件
+ * text：新聞內容
+ * url：網址
+ */
+export type digestText = {
+    text: string;
+    url: string;
+};
+
 class ApiService {
     /**
      * 對話標題
@@ -27,7 +51,7 @@ class ApiService {
      */
     async fetchChatTitle(question: string) {
         try {
-            const response = await fetch(CHAT_API_URL + "generate-chat-title", {
+            const response = await fetch(BASE_API_URL + "generate-chat-title", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -57,7 +81,7 @@ class ApiService {
      */
     async fetchRobotResponse(request: ChatQuestionRequest): Promise<RobotResponse> {
         try {
-            const response = await fetch(CHAT_API_URL + "wits_hub", {
+            const response = await fetch(BASE_API_URL + "wits_hub", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -75,6 +99,30 @@ class ApiService {
             return {
                 output: translate("common.busy"),
             };
+        }
+    }
+
+    /**
+     * 獲取 AI 新知（週報）
+     */
+    async fetchAINews(): Promise<AINewsResponse> {
+        try {
+            const response = await fetch(BASE_API_URL + "ai_digest", {
+                method: "Get",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed with status ${response.status}`);
+            }
+
+            return response.json();
+
+        } catch (error) {
+            console.error("wits_hub error:", error);
+            return {digest_text_tw: [], digest_text_en: [], ai_questions_tw: [], ai_questions_en: []};
         }
     }
 }

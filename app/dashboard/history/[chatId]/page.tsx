@@ -468,7 +468,7 @@ export default function ChatPage() {
                             ? t("chat.placeholder.disabled")
                             : t("chat.placeholder")
                     }
-                    className="flex-1 rounded-xl border border-white/30 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
+                    className="flex-1 rounded-xl border border-white/30 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
                     disabled={isListening}
                 />
                 {/* 送出 / 停止按鈕 */}
