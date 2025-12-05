@@ -20,7 +20,8 @@ export function LanguageSwitcher() {
     // 定義下拉選單的選項
     const languages: { code: Locale; label: string }[] = [
         { code: "zh-TW", label: "中文" },
-        { code: "en", label: "English" }
+        { code: "en", label: "English" },
+        { code: "ja", label: "日本語" }
     ];
 
     // 切換了語系
