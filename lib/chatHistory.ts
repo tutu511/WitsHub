@@ -24,11 +24,12 @@ export type ChatHistory = {
     id: string;
     personId: string;
     title: string;
+    type: string;
     messages: Message[];
 };
 
 // 新增或更新歷史紀錄
-export const saveHistory = (messages: Message[], chatId?: string): string => {
+export const saveHistory = (messages: Message[], chatId?: string, type: string = ""): string => {
     /**
      * 從 localStorage 讀出 key 為 chatHistory 的值並 parse 成陣列
      * 如果 localStorage 中沒有該 key，使用 "[]" 作為 fallback，確保 parse 後為空陣列
@@ -67,6 +68,7 @@ export const saveHistory = (messages: Message[], chatId?: string): string => {
         id: newId,
         personId: personId,
         title: messages[0]?.content || translate("chat.defaultTitle"),
+        type: type,
         messages,
     };
     // 將新的 history 放在陣列開頭（代表最新），然後與 prev 合併成新的陣列，序列化後寫回 localStorage

@@ -14,7 +14,9 @@ export type User = {
     password: string,
     email: string,
     personName: string,
-    role?: string;
+    role?: string,
+    dept?: string,
+    personNameEn?: string,
 };
 
 // 導向登入頁

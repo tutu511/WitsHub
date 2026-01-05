@@ -5,7 +5,7 @@ import Link from "next/link";
 // 匯入 usePathname Hook，可以取得當前路由路徑（pathname）
 import { usePathname, useRouter } from "next/navigation";
 // icon
-import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal, Newspaper } from "lucide-react";
+import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal, Newspaper, FilePenLine } from "lucide-react";
 // 匯入 useState Hook，用來建立狀態（historyExpanded）
 import { JSX, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -287,6 +287,21 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                         {/* 新聞圖示 icon（代表 AI 新知） */}
                                      <Newspaper size={18} className="text-slate-400" />
                                      {t("news.title")}
+                                    </span>
+                            </Link>
+
+                            <Link
+                                href="/dashboard/hrSelfService"
+                                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all duration-200 border border-transparent ${
+                                    normalizePath(pathname) === normalizePath("/dashboard/hrSelfService")
+                                        ? "bg-white/15 text-white shadow-[0_10px_40px_rgba(59,130,246,0.35)] border-white/30"
+                                        : "text-slate-300 hover:text-white hover:bg-white/10"
+                                }`}
+                            >
+                                 <span className="flex items-center gap-3">
+                                        {/* 文件圖示 icon（代表 行政自助服務） */}
+                                     <FilePenLine size={18} className="text-slate-400" />
+                                     {t("hrSelfService.title")}
                                     </span>
                             </Link>
 

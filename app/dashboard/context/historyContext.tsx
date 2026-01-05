@@ -24,7 +24,7 @@ import { Message } from "@/lib/chatHistory";
 type HistoryContextType = {
     historyList: ChatHistory[];
     refreshHistory: () => void;
-    addHistory: (messages: Message[], options?: { isTitlePending?: boolean }) => string;
+    addHistory: (messages: Message[], options?: { isTitlePending?: boolean }, type?: string) => string;
     removeHistory: (historyId: string) => void;
     renameHistory: (historyId: string, title: string) => void;
     titleLoadingIds: string[];
@@ -62,10 +62,12 @@ export const HistoryProvider = ({ children }: { children: ReactNode }) => {
      * 新建一筆紀錄：呼叫 saveHistory 將 messages 寫入 localStorage
      *
      * 新對話 - 點擊發送 - 要新增一筆紀錄到 localStorage - 刷新歷史紀錄的列表 - 根據 chatId 跳轉到對應的對話頁面
+     *
+     * type：默認都是 “”，目前只有 “行政自助服務” 比較特別，需要 call 其他的 api
      */
-    const addHistory = (messages: Message[], options?: { isTitlePending?: boolean }) => {
+    const addHistory = (messages: Message[], options?: { isTitlePending?: boolean }, type?: string) => {
         // saveHistory 會回傳新建立的 chatId，並存 localStorage
-        const chatId = saveHistory(messages);
+        const chatId = saveHistory(messages, undefined, type);
         // 新增完後重新同步 historyList 到 UI
         refreshHistory();
         if (options?.isTitlePending) {
