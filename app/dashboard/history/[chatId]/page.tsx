@@ -12,11 +12,11 @@ import { getChatById, saveHistory, Message } from "@/lib/chatHistory";
 import { useI18n } from "@/components/i18n-provider";
 import VoiceTransformText from "@/components/voiceTransformText";
 // api：機器人回覆
-import {apiService, RobotResponse} from "@/lib/api";
+import {apiService, HrSelfChatQuestionRequest, HrSelfUser, RobotResponse} from "@/lib/api";
 // api：向機器人提問
 import { ChatQuestionRequest } from "@/lib/api";
 // 獲取用戶 id（員工編號）
-import {getPersonId} from "@/lib/user";
+import {getPersonId, getUser} from "@/lib/user";
 // 獲取風格
 import { getReplyPreference } from "@/lib/preference";
 import {ChatToolbar} from "@/components/chatToolbar";
@@ -41,6 +41,8 @@ export default function ChatPage() {
     const isThinkingRef = useRef(false);
     // 狀態：機器人是否正在「思考中」（等回覆中）
     const [isThinking, setIsThinking] = useState(false);
+    // 類型：目前這個聊天室是否是特殊類型 - “行政自助服務”
+    const typeRef = useRef("");
 
     /**
      * 打字機效果，用於保存 setInterval ID，以便停止打字時清除 interval
@@ -83,6 +85,9 @@ export default function ChatPage() {
         const chat = getChatById(chatId);
         // 沒資料就不用載入
         if (!chat) return;
+
+        // 存取歷史紀錄中聊天類型
+        typeRef.current = chat.type;
 
         // 載入歷史訊息到畫面
         setMessages(chat.messages);
@@ -317,6 +322,8 @@ export default function ChatPage() {
     async function handleRobotResponse(userInput: string, chatId: string): Promise<RobotResponse>{
         // 獲取當前登錄的用戶(從 localStorage 取得員工編號)
         const personId = getPersonId();
+        // 獲取當前登錄的用戶
+        const stored = getUser();
 
         /**
          * chatinput：使用者的問題
@@ -324,18 +331,48 @@ export default function ChatPage() {
          * chatId：對話 id 用來給 agent 存 memory
          * prompt：風格定義
          */
-        const request: ChatQuestionRequest = {
+        const chatRequest: ChatQuestionRequest = {
             chatinput: userInput,
             empId: personId,
             chatId: chatId,
             prompt: getReplyPreference(personId),
         };
-        const robotResponse = await apiService.fetchRobotResponse(request);
+        const hrSelfUser: HrSelfUser = {
+            emp_id: stored?.username,
+            emp_name: stored?.personName,
+            email: stored?.email,
+            dept: stored?.dept,
+            emp_name_en: stored?.personNameEn,
+        }
+        // 行政自助服務
+        const hrSelfChatRequest: HrSelfChatQuestionRequest = {
+            user: hrSelfUser,
+            sessionId: personId,
+            message: userInput
+        };
+
+        // 臨時先這麼寫：對行政自助服務進行特殊設定
+        const robotResponse = typeRef.current == "hrSelfService"
+            ? await apiService.fetchHrSelfRobotResponse(hrSelfChatRequest)
+            : await apiService.fetchRobotResponse(chatRequest);
         if (robotResponse.output) {
             return robotResponse
         } else {
             return { output: t("chat.error"), img: ""}
         }
+    }
+
+    function convertMarkdownToHtml(text: string) {
+        if (!text) return "";
+
+        return text
+            // 轉成 <a>
+            .replace(
+                /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+                `<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline">$1</a>`
+            )
+            // 保留換行
+            .replace(/\n/g, "<br/>");
     }
 
     return (
@@ -387,8 +424,12 @@ export default function ChatPage() {
                                             </span>
                                             ) : (
                                                 <>
-                                                    {/* 先顯示文字 */}
-                                                    <div>{m.content}</div>
+                                                    {/* 先顯示文字：如果有 url 會隱藏起來，變成可跳轉的 */}
+                                                    <div
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: convertMarkdownToHtml(m.content)
+                                                        }}
+                                                    />
 
                                                     {/* 若有圖片，顯示在下面 */}
                                                     {m.img && (

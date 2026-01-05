@@ -8,10 +8,10 @@ import { useI18n } from "@/components/i18n-provider";
 
 // Demo 帳號密碼配置
 const DEMO_ACCOUNTS : User[] = [
-  { username: "TP2509034", password: "12345678", email:"RubyWang@wits.com", personName: "王芸若", role: "資深專員"},
-  { username: "TP2509041", password: "12345678", email:"LucyHuang@wits.com", personName: "莊于萱", role: "軟體開發資深工程師"},
-  { username: "TP2412020", password: "zaq12wsx", email:"KelseyLin@wits.com", personName: "林采薇", role: "軟體開發工程師"},
-  { username: "TP2407045", password: "123456", email:"FangYuTu@wits.com", personName: "涂芳瑜", role: "軟體開發工程師"}
+  { username: "TP2509034", password: "12345678", email:"RubyWang@wits.com", personName: "王芸若", role: "資深專員", dept: "TR0113", personNameEn: "RubyWang"},
+  { username: "TP2509041", password: "12345678", email:"LucyHuang@wits.com", personName: "莊于萱", role: "軟體開發資深工程師", dept: "TR0113", personNameEn: "LucyHuang"},
+  { username: "TP2412020", password: "zaq12wsx", email:"KelseyLin@wits.com", personName: "林采薇", role: "軟體開發工程師", dept: "TR0113", personNameEn: "KelseyLin"},
+  { username: "TP2407045", password: "123456", email:"FangYuTu@wits.com", personName: "涂芳瑜", role: "軟體開發工程師", dept: "TR0112", personNameEn: "FangYuTu"}
 ];
 
 export default function LoginPage() {

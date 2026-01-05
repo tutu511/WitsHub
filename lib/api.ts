@@ -9,6 +9,22 @@ export interface ChatQuestionRequest {
     prompt: string;
 }
 
+// 行政自助服務 機器人回答 api：request
+export interface HrSelfChatQuestionRequest {
+    user: HrSelfUser;
+    sessionId: string;
+    message: string;
+}
+
+// 行政自助服務 需要的使用者信息
+export interface HrSelfUser {
+    emp_name_en: string | undefined;
+    emp_name: string | undefined;
+    dept: string | undefined;
+    email: string | undefined;
+    emp_id: string | undefined
+}
+
 /**
  * 機器人回答 api：Response
  * output：文本
@@ -82,6 +98,36 @@ class ApiService {
     async fetchRobotResponse(request: ChatQuestionRequest): Promise<RobotResponse> {
         try {
             const response = await fetch(BASE_API_URL + "wits_hub", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(request),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed with status ${response.status}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error("wits_hub error:", error);
+            return {
+                output: translate("common.busy"),
+            };
+        }
+    }
+
+
+    /**
+     * 行政自助服務：機器人回覆
+     * user: 使用者的登入資訊
+     * sessionId: 員工編號
+     * message: 聊天問題
+     */
+    async fetchHrSelfRobotResponse(request: HrSelfChatQuestionRequest): Promise<RobotResponse> {
+        try {
+            const response = await fetch(BASE_API_URL + "administrative_mcp", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
