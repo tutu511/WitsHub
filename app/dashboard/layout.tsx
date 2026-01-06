@@ -5,7 +5,16 @@ import Link from "next/link";
 // 匯入 usePathname Hook，可以取得當前路由路徑（pathname）
 import { usePathname, useRouter } from "next/navigation";
 // icon
-import { MessageSquare, Clock, ChevronRight, ChevronDown, MoreHorizontal, Newspaper, FilePenLine } from "lucide-react";
+import {
+    MessageSquare,
+    Clock,
+    ChevronRight,
+    ChevronDown,
+    MoreHorizontal,
+    Newspaper,
+    FilePenLine,
+    Bot
+} from "lucide-react";
 // 匯入 useState Hook，用來建立狀態（historyExpanded）
 import { JSX, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -481,11 +490,21 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                             </div>
                         </div>
 
-                        <div className="mt-auto pt-4 border-t border-white/5">
-                            <div className="flex items-center justify-between px-2 pb-4">
+                        <div className="mt-auto pt-2 border-t border-white/5">
+                            <div className="flex items-center justify-between px-2 pb-2">
                                 <LanguageSwitcher />
                                 <LogoutButton />
                             </div>
+
+                            <div
+                                className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-m font-medium text-white border border-white/25 hover:border-white/40 hover:shadow-md transition cursor-pointer"
+                            >
+                                <Bot size={25}></Bot>
+                                <span>Agent Builder</span>
+                            </div>
+
+                            <div className="pb-4"></div>
+
                             {/*點擊進入個人資料頁*/}
                             <Link
                                 href="/dashboard/profile"
