@@ -13,7 +13,7 @@ import {
     MoreHorizontal,
     Newspaper,
     FilePenLine,
-    Bot
+    Bot, FolderSync
 } from "lucide-react";
 // 匯入 useState Hook，用來建立狀態（historyExpanded）
 import { JSX, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -497,10 +497,19 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                             </div>
 
                             <div
-                                className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-m font-medium text-white border border-white/25 hover:border-white/40 hover:shadow-md transition cursor-pointer"
+                                className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-sm font-medium text-white border border-white/25 hover:border-white/40 hover:shadow-md transition cursor-pointer"
                             >
-                                <Bot size={25}></Bot>
+                                <Bot size={24}></Bot>
                                 <span>Agent Builder</span>
+                            </div>
+
+                            <div className="pb-4"></div>
+
+                            <div
+                                className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-sm font-medium text-white border border-white/25 hover:border-white/40 hover:shadow-md transition cursor-pointer"
+                            >
+                                <FolderSync size={24}></FolderSync>
+                                <span>協銷文件</span>
                             </div>
 
                             <div className="pb-4"></div>
